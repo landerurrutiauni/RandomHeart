@@ -16,6 +16,7 @@
   --ok: #23804F; --ok-soft: #DCF0E4; --bad: #BB3A33; --bad-soft: #F7E0DE;
   --display: "Pixelify Sans", "Courier New", monospace;
   --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --map-sea: #D9E6F2; --map-land: #E9EFE0; --map-path: #C9B98E;
   --r: 10px;
   color-scheme: light;
 }
@@ -23,12 +24,12 @@
   --bg: #0D1322; --panel: #161F35; --ink: #E7EBF4; --muted: #94A0BB; --line: #27324F;
   --gold: #E4B850; --gold-fill: #E4B850; --gold-soft: #3A3120;
   --rival: #92B4DC; --rival-soft: #1F2C46;
-  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; color-scheme: dark; } }
+  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; --map-sea: #101C30; --map-land: #1C2A3D; --map-path: #4A4A3A; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0D1322; --panel: #161F35; --ink: #E7EBF4; --muted: #94A0BB; --line: #27324F;
   --gold: #E4B850; --gold-fill: #E4B850; --gold-soft: #3A3120;
   --rival: #92B4DC; --rival-soft: #1F2C46;
-  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; color-scheme: dark; }
+  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; --map-sea: #101C30; --map-land: #1C2A3D; --map-path: #4A4A3A; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -170,6 +171,50 @@ table.caps { width: 100%; border-collapse: collapse; font-size: .84rem; font-var
 .seg button.f[aria-pressed="true"] { background: var(--bad); color: #fff; }
 @media (max-width: 420px) { .seg button { padding: 5px 7px; } }
 
+
+/* ---------- Level cap ---------- */
+.cap { display: flex; gap: 18px; align-items: center; background: var(--gold-soft); border-radius: 8px; padding: 12px 14px; flex-wrap: wrap; }
+.cap > div { display: grid; gap: 2px; min-width: 0; }
+.cap-num { font-family: var(--display); font-size: 2.2rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
+.cap-who b { font-size: 1rem; }
+.warn { color: var(--bad); font-weight: 600; font-size: .85rem; }
+.okline { color: var(--ok); font-weight: 600; font-size: .85rem; }
+.badge .lv { font-size: .62rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.league { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 12px; text-align: left; }
+.league .gem { width: 18px; height: 18px; border-radius: 50%; background: var(--line); flex: none; }
+.league.on { border-color: var(--gold); background: var(--gold-soft); }
+.league.on .gem { background: var(--gold-fill); }
+.caps-list summary { cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--muted); }
+.caps-list .tbl-wrap { margin-top: 10px; }
+.caps tr.done td { color: var(--muted); text-decoration: line-through; }
+.mon.over { border-color: var(--bad); background: var(--bad-soft); }
+
+/* ---------- Mapa ---------- */
+.map-panel { gap: 12px; }
+.map-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.map-box { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--map-sea); }
+.map-box svg { display: block; width: 100%; min-width: 620px; height: auto; }
+.m-land { fill: var(--map-land); }
+.m-edge { stroke: var(--map-path); stroke-width: 5; stroke-linecap: round; fill: none; }
+.m-node { cursor: pointer; }
+.m-node .s { fill: var(--panel); stroke: var(--ink); stroke-width: 1.6; }
+.m-node.caught .s { fill: var(--ok); stroke: var(--ok); }
+.m-node.failed .s { fill: var(--bad); stroke: var(--bad); }
+.m-node.caught text.in, .m-node.failed text.in { fill: #fff; }
+.m-node .ring { fill: none; stroke: var(--gold-fill); stroke-width: 3; display: none; }
+.m-node.here .ring { display: block; }
+.m-node.sel .s { stroke: var(--gold); stroke-width: 3; }
+.m-node:focus-visible { outline: none; }
+.m-node:focus-visible .s { stroke: var(--gold); stroke-width: 3; }
+.m-node text { font: 600 9px var(--body); fill: var(--ink); pointer-events: none; }
+.m-node text.lab { font-size: 10px; paint-order: stroke; stroke: var(--map-land); stroke-width: 3px; }
+.map-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+.map-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; border: 1.5px solid var(--ink); background: var(--panel); }
+.map-legend i.c { background: var(--ok); border-color: var(--ok); }
+.map-legend i.f { background: var(--bad); border-color: var(--bad); }
+.map-legend i.h { background: transparent; border: 3px solid var(--gold-fill); }
+.map-sel { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 52px; }
+.map-sel b { font-size: 1rem; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: .88rem; max-width: calc(100% - 32px); z-index: 20; }
 </style>
 </head>
@@ -206,12 +251,28 @@ table.caps { width: 100%; border-collapse: collapse; font-size: .84rem; font-var
     <div class="rival-stats">
       <div class="stat"><span class="label">Vidas</span><b id="rv-lives">—</b></div>
       <div class="stat"><span class="label">Medallas</span><b id="rv-badges-n">—</b></div>
+      <div class="stat"><span class="label">Level cap</span><b id="rv-cap">—</b></div>
       <div class="stat"><span class="label">Medallas obtenidas</span><div class="mini-badges" id="rv-badges"></div></div>
       <div class="stat"><span class="label">Zona actual</span><b id="rv-zone">—</b></div>
       <div class="stat"><span class="label">Zonas</span><b id="rv-zones">—</b></div>
       <div class="stat"><span class="label">Última actividad</span><span id="rv-when" class="muted">—</span></div>
     </div>
     <div class="privacy">Solo se ve el avance. El equipo del rival nunca sale de su ordenador: el .save se lee en su navegador y no se guarda en ningún sitio.</div>
+  </section>
+
+  <section class="panel map-panel" aria-labelledby="h-map">
+    <div class="panel-head"><h2 id="h-map">Mapa</h2>
+      <div class="map-tools">
+        <div class="tabs" role="group" aria-label="Región del mapa">
+          <button data-map="Johto" aria-pressed="true">Johto</button>
+          <button data-map="Kanto" aria-pressed="false">Kanto</button>
+        </div>
+        <div class="tabs" role="group" aria-label="De quién es el mapa" id="map-who"></div>
+      </div>
+    </div>
+    <div class="map-box" id="map-box"></div>
+    <div class="map-legend"><span><i class="c"></i>Capturado</span><span><i class="f"></i>Fallido</span><span><i></i>Por visitar</span><span><i class="h"></i>Zona actual</span><span>Círculo = ruta · cuadrado = ciudad · rombo = cueva, torre o lugar</span></div>
+    <div class="map-sel" id="map-sel"><span class="muted">Toca una zona del mapa para ver su estado o marcarla.</span></div>
   </section>
 
   <div class="cols">
@@ -227,9 +288,12 @@ table.caps { width: 100%; border-collapse: collapse; font-size: .84rem; font-var
       </section>
 
       <section class="panel" aria-labelledby="h-badges">
-        <div class="panel-head"><h2 id="h-badges">Medallas</h2><span class="chip" id="badge-count">0/16</span></div>
+        <div class="panel-head"><h2 id="h-badges">Medallas y level cap</h2><span class="chip" id="badge-count">0/16</span></div>
+        <div class="cap" id="cap"></div>
         <div class="badge-region"><span class="label">Johto</span><div class="badges" id="badges-johto"></div></div>
+        <button class="league" id="league" aria-pressed="false"><span class="gem"></span><span><b>Liga Pokémon</b> <span class="muted">· Alto Mando y Lance, cap 50</span></span></button>
         <div class="badge-region"><span class="label">Kanto</span><div class="badges" id="badges-kanto"></div></div>
+        <details class="caps-list"><summary>Ver todos los level caps</summary><div class="tbl-wrap"><table class="caps"><thead><tr><th>Combate</th><th>Medalla</th><th>Cap</th></tr></thead><tbody id="cap-rows"></tbody></table></div></details>
       </section>
 
       <section class="panel" aria-labelledby="h-team">
@@ -482,13 +546,27 @@ const SUPABASE_URL = "https://aflxpuctwkjteyvlrmui.supabase.co";
 const SUPABASE_KEY = "sb_publishable_FmTTmbe63YnUP_Tt4tNobA_FKX6Qxgq";
 const PLAYERS = ["Landorus", "Gorkis"];
 
+// Mismo orden que los bits del juego
 const BADGES = {
   Johto: ["Céfiro", "Colmena", "Planicie", "Niebla", "Tormenta", "Mineral", "Glaciar", "Dragón"],
-  Kanto: ["Trueno", "Roca", "Cascada", "Arcoíris", "Alma", "Pantano", "Volcán", "Tierra"],
+  Kanto: ["Roca", "Cascada", "Trueno", "Arcoíris", "Alma", "Pantano", "Volcán", "Tierra"],
 };
-// Orden de los bits del juego (Kanto): Roca, Cascada, Trueno, Arcoíris, Alma, Pantano, Volcán, Tierra
-const KANTO_BIT_ORDER = ["Roca", "Cascada", "Trueno", "Arcoíris", "Alma", "Pantano", "Volcán", "Tierra"];
-BADGES.Kanto = KANTO_BIT_ORDER;
+// Nivel del Pokémon más fuerte de cada líder (primer combate). Índice = id de medalla.
+const LEADERS = [
+  ["Pegaso", 13], ["Antón", 17], ["Blanca", 19], ["Morti", 25], ["Aníbal", 31], ["Yasmina", 35], ["Fredo", 34], ["Débora", 41],
+  ["Brock", 54], ["Misty", 54], ["Lt. Surge", 53], ["Erika", 56], ["Sachiko", 50], ["Sabrina", 55], ["Blaine", 59], ["Azul", 60],
+];
+const LEAGUE = 16; // se guarda junto a las medallas: Liga Pokémon superada
+const ELITE = [["Mento", 42], ["Koga", 44], ["Bruno", 46], ["Karen", 47], ["Lance", 50]];
+function levelCap(badges) {
+  const s = new Set(badges || []);
+  const pick = ids => ids.filter(i => !s.has(i)).reduce((a, i) => (!a || LEADERS[i][1] < a.level ? { level: LEADERS[i][1], who: LEADERS[i][0], badge: i } : a), null);
+  const johto = pick([0, 1, 2, 3, 4, 5, 6, 7]);
+  if (johto) return johto;
+  if (!s.has(LEAGUE)) return { level: 50, who: "Liga Pokémon (Lance)", badge: LEAGUE };
+  return pick([8, 9, 10, 11, 12, 13, 14, 15]) || { level: 88, who: "Rojo", badge: null };
+}
+const badgeCount = b => (b || []).filter(i => i < 16).length;
 
 // Zonas en orden de juego, con su ID de lugar en la partida (para leerlas del .sav)
 const ZONE_IDS = {
@@ -574,7 +652,7 @@ async function setEncounter(zone, status) {
 }
 
 // ---------- Render ----------
-function renderAll() { renderMine(); renderRoutes(); renderRival(); }
+function renderAll() { renderMine(); renderRoutes(); renderRival(); renderMap(); }
 
 function renderMine() {
   const p = state.players[me]; if (!p) return;
@@ -586,10 +664,24 @@ function renderMine() {
   ["Johto", "Kanto"].forEach((reg, r) => {
     $("badges-" + reg.toLowerCase()).innerHTML = BADGES[reg].map((n, i) => {
       const id = r * 8 + i;
-      return `<button class="badge${owned.has(id) ? " on" : ""}" id="badge-${id}" data-b="${id}" aria-pressed="${owned.has(id)}" title="Medalla ${n}"><i class="gem"></i><span>${n}</span></button>`;
+      return `<button class="badge${owned.has(id) ? " on" : ""}" id="badge-${id}" data-b="${id}" aria-pressed="${owned.has(id)}" title="Medalla ${n} · ${LEADERS[id][0]} · nivel ${LEADERS[id][1]}"><i class="gem"></i><span>${n}</span><small class="lv">Nv. ${LEADERS[id][1]}</small></button>`;
     }).join("");
   });
-  $("badge-count").textContent = `${owned.size}/16`;
+  $("badge-count").textContent = `${badgeCount(p.badges)}/16`;
+  $("league").classList.toggle("on", owned.has(LEAGUE));
+  $("league").setAttribute("aria-pressed", owned.has(LEAGUE));
+  const cap = levelCap(p.badges);
+  const over = lastTeam.filter(m => !m.isEgg && m.level > cap.level);
+  $("cap").innerHTML = `<div><span class="label">Level cap actual</span><b class="cap-num">${cap.level}</b></div>
+    <div class="cap-who"><span class="muted">Próximo combate</span><b>${esc(cap.who)}</b>
+    ${lastTeam.length ? (over.length ? `<span class="warn">Pasan el cap: ${over.map(m => esc(LOC.spEs[m.species] || HG.speciesName(m)) + " (Nv. " + m.level + ")").join(", ")}</span>` : `<span class="okline">Todo el equipo está dentro del cap</span>`) : ""}</div>`;
+  const rows = [];
+  LEADERS.slice(0, 8).forEach((l, i) => rows.push([l[0], BADGES.Johto[i], l[1], owned.has(i)]));
+  ELITE.forEach(e => rows.push([e[0], "Liga Pokémon", e[1], owned.has(LEAGUE)]));
+  LEADERS.slice(8).forEach((l, i) => rows.push([l[0], BADGES.Kanto[i], l[1], owned.has(8 + i)]));
+  rows.push(["Rojo", "Monte Plateado", 88, false]);
+  $("cap-rows").innerHTML = rows.map(r => `<tr class="${r[3] ? "done" : ""}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+  renderTeamCaps();
   updateApplyBadges();
 }
 
@@ -632,6 +724,7 @@ function renderRoutes() {
     });
   });
   updateApplyZones();
+  if (typeof renderMap === "function" && $("map-box").firstChild) renderMap();
   $("routes").innerHTML = html || `<p class="muted" style="padding:14px 18px">No hay zonas con ese filtro.</p>`;
 }
 
@@ -650,7 +743,8 @@ function renderRival() {
   if (!p) return;
   const owned = new Set(p.badges || []);
   $("rv-lives").textContent = `${p.lives}/30`;
-  $("rv-badges-n").textContent = `${owned.size}/16`;
+  $("rv-badges-n").textContent = `${badgeCount(p.badges)}/16`;
+  $("rv-cap").textContent = levelCap(p.badges).level;
   $("rv-badges").innerHTML = Array.from({ length: 16 }, (_, i) =>
     `<i class="${owned.has(i) ? "on" : ""}${i === 8 ? " gap" : ""}" title="${i < 8 ? BADGES.Johto[i] : BADGES.Kanto[i - 8]}"></i>`).join("");
   $("rv-zone").textContent = p.location ? `${p.location}${ZONE_REGION[p.location] && ZONE_REGION[p.location] !== "Especiales" ? " · " + ZONE_REGION[p.location] : ""}` : "Sin empezar";
@@ -673,9 +767,11 @@ function readSave(file) {
       $("team-cards").innerHTML = r.team.map(m => {
         if (m.isEgg) return `<div class="mon"><b>Huevo</b><small>—</small></div>`;
         const pct = m.maxHp ? Math.round(100 * m.hp / m.maxHp) : 0;
-        return `<div class="mon"><b>${esc(LOC.spEs[m.species] || HG.speciesName(m))}${m.shiny ? " ✦" : ""}</b><small>Nv. ${m.level} · ${m.hp}/${m.maxHp} PS</small><div class="hpbar"><i style="width:${pct}%"></i></div></div>`;
+        return `<div class="mon" data-lv="${m.level}"><b>${esc(LOC.spEs[m.species] || HG.speciesName(m))}${m.shiny ? " ✦" : ""}</b><small>Nv. ${m.level} · ${m.hp}/${m.maxHp} PS</small><div class="hpbar"><i style="width:${pct}%"></i></div></div>`;
       }).join("");
+      lastTeam = r.team;
       renderCaptures(r);
+      renderMine();
       saveBadges = [];
       for (let i = 0; i < 8; i++) if (r.johto >> i & 1) saveBadges.push(i);
       for (let i = 0; i < 8; i++) if (r.kanto >> i & 1) saveBadges.push(8 + i);
@@ -690,6 +786,11 @@ function readSave(file) {
   fr.readAsArrayBuffer(file);
 }
 let saveZones = [];
+let lastTeam = [];
+function renderTeamCaps() {
+  const cap = state.players[me] ? levelCap(state.players[me].badges).level : 100;
+  document.querySelectorAll(".mon[data-lv]").forEach(el => el.classList.toggle("over", +el.dataset.lv > cap));
+}
 function renderCaptures(r) {
   const all = [...r.team.map(m => ({ ...m, where: "team" })), ...r.boxes.map(m => ({ ...m, where: "box" }))].filter(m => !m.isEgg);
   $("caps").innerHTML = all.map(m => {
@@ -730,18 +831,18 @@ async function applyZones() {
 function updateApplyBadges() {
   const btn = $("apply-badges");
   if (!saveBadges || !state.players[me]) { btn.hidden = true; return; }
-  const cur = [...(state.players[me].badges || [])].sort((a, b) => a - b).join();
+  const cur = (state.players[me].badges || []).filter(i => i < 16).sort((a, b) => a - b).join();
   btn.hidden = cur === [...saveBadges].sort((a, b) => a - b).join();
   btn.textContent = `Usar medallas del save (${saveBadges.length})`;
 }
 
 // ---------- Eventos ----------
 function choose(name) {
-  me = name; rival = PLAYERS.find(p => p !== name);
+  me = name; rival = PLAYERS.find(p => p !== name); mapWho = me; mapSel = null;
   store.set("rl-player", name);
   $("me-name").textContent = me;
   $("pick").hidden = true; $("app").hidden = false;
-  $("team-out").hidden = true; saveBadges = null; saveZones = []; $("save-file").value = "";
+  $("team-out").hidden = true; saveBadges = null; saveZones = []; lastTeam = []; $("save-file").value = "";
   renderAll();
 }
 document.querySelectorAll(".pick-card").forEach(b => b.addEventListener("click", () => choose(b.dataset.player)));
@@ -755,6 +856,12 @@ document.addEventListener("click", e => {
   if (b) {
     const id = +b.dataset.b; const s = new Set(state.players[me].badges || []);
     s.has(id) ? s.delete(id) : s.add(id);
+    updatePlayer({ badges: [...s].sort((a, b) => a - b) });
+    return;
+  }
+  if (e.target.closest("#league")) {
+    const s = new Set(state.players[me].badges || []);
+    s.has(LEAGUE) ? s.delete(LEAGUE) : s.add(LEAGUE);
     updatePlayer({ badges: [...s].sort((a, b) => a - b) });
     return;
   }
@@ -794,7 +901,112 @@ $("copy-paste").addEventListener("click", async () => {
   }
 });
 $("apply-zones").addEventListener("click", applyZones);
-$("apply-badges").addEventListener("click", () => { if (saveBadges) updatePlayer({ badges: [...saveBadges].sort((a, b) => a - b) }); });
+$("apply-badges").addEventListener("click", () => {
+  if (!saveBadges) return;
+  const keep = (state.players[me].badges || []).filter(i => i >= 16);
+  updatePlayer({ badges: [...saveBadges, ...keep].sort((a, b) => a - b) });
+});
+
+
+// ---------- Mapa ----------
+// Posiciones aproximadas según el mapa del Pokégear de HGSS. [id de lugar, x, y]
+const MAP = {
+  Johto: {
+    nodes: [[126,20,12],[177,18,12],[127,16,12],[178,16,9.6],[179,14,7],[220,16.2,6.2],[128,12,7],[204,12,5.5],[180,12,10],[209,10.3,10],
+      [210,12,13],[181,10.5,14.6],[129,9,15],[211,9,16.5],[214,7,15],[182,6,13.5],[131,6,12],[215,7.5,11.6],[183,6,10],[207,6,8.4],
+      [184,9,7],[185,8,5.6],[133,8,4],[206,6.9,2.9],[205,9.1,2.7],[186,6,4],[187,4,5],[132,4,7],[212,2.7,6.6],[226,2.6,8.4],
+      [188,4,9],[189,3,11],[218,4.5,12.4],[130,1,12.6],[195,-0.6,11],[228,-1.8,12.3],[196,-0.6,8.8],[202,-0.6,6.8],
+      [190,11,4],[216,11,2.7],[134,14,4],[213,15.3,5.2],[191,14,2.6],[135,14,1.1],[192,16,4],[217,18,4],[136,20,4],[222,21.4,2.8],
+      [193,20,7.6],[194,18,10],[175,22,12],[223,23.6,12],[174,23.6,9],[221,23.6,6]],
+    edges: [[126,177],[177,127],[127,178],[178,179],[179,128],[179,220],[128,204],[128,180],[180,209],[180,210],[210,181],[181,129],
+      [129,211],[129,214],[214,182],[182,131],[131,215],[131,183],[183,207],[207,184],[184,128],[184,185],[185,133],[133,206],[133,205],
+      [133,186],[186,187],[187,132],[132,212],[132,226],[132,188],[188,189],[189,218],[189,130],[130,195],[195,228],[195,196],[196,202],
+      [133,190],[190,216],[190,134],[134,213],[134,191],[191,135],[134,192],[192,217],[217,136],[136,222],[136,193],[193,220],[193,194],
+      [194,177],[126,175],[175,223],[223,174],[174,221]],
+  },
+  Kanto: {
+    nodes: [[138,5,15],[149,5,13],[139,5,11],[170,3,11],[176,1.2,11],[137,0,9.2],[219,0,7.4],[150,5,9],[224,3.6,8],[140,5,6],
+      [151,7.4,6],[198,9.4,5],[152,11.6,5],[141,14,5],[172,14,3],[173,16,2],[199,12.4,3.4],[157,16.6,5],[158,19,5.6],[201,20.6,4.2],
+      [200,19,7.2],[142,19,9],[156,16.6,9],[148,14,9],[153,14,7],[155,11.8,9],[144,10,9],[164,8,9],[165,8,12],[166,9.6,15],[145,12,15],
+      [154,14,11],[143,14,13],[159,16.6,13],[197,17.4,14.5],[160,19,11.6],[161,18.4,14],[162,16.4,15.6],[163,14,16.2],[167,12,17],
+      [168,9.6,18],[203,7.6,18],[146,5,18],[169,5,16.6]],
+    edges: [[138,149],[149,139],[139,170],[170,176],[176,137],[137,219],[139,150],[150,224],[224,140],[140,151],[151,198],[198,152],
+      [152,141],[141,172],[172,173],[141,199],[141,157],[157,158],[158,201],[158,200],[200,142],[142,156],[156,148],[141,153],[153,148],
+      [148,155],[155,144],[144,164],[164,165],[165,166],[166,145],[148,154],[154,143],[143,159],[159,197],[159,160],[142,160],[160,161],
+      [161,162],[162,163],[163,145],[145,167],[167,168],[168,203],[203,146],[146,169],[169,138]],
+  },
+};
+const U = 34; // píxeles por unidad
+let mapRegion = "Johto", mapWho = null, mapSel = null;
+
+function nodeKind(id) { return id >= 126 && id <= 148 ? "city" : id >= 149 && id <= 196 ? "route" : "place"; }
+
+function renderMap() {
+  if (!me) return;
+  mapWho ||= me;
+  $("map-who").innerHTML = [me, rival].map(p => `<button data-who="${p}" aria-pressed="${p === mapWho}">${p === me ? "Mi mapa" : p}</button>`).join("");
+  const M = MAP[mapRegion];
+  const pos = {}; M.nodes.forEach(([id, x, y]) => pos[id] = [x, y]);
+  const xs = M.nodes.map(n => n[1]), ys = M.nodes.map(n => n[2]);
+  const minX = Math.min(...xs) - 1.6, maxX = Math.max(...xs) + 1.6, minY = Math.min(...ys) - 1.2, maxY = Math.max(...ys) + 1.2;
+  const P = ([x, y]) => [((x - minX) * U).toFixed(1), ((y - minY) * U).toFixed(1)];
+  const W = (maxX - minX) * U, H = (maxY - minY) * U;
+  const enc = state.enc[mapWho] || {}, loc = state.players[mapWho]?.location;
+  let s = `<svg viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" role="img" aria-label="Mapa de ${mapRegion}">`;
+  // tierra: una mancha suave detrás de cada zona
+  s += `<g class="m-land">` + M.nodes.map(n => { const [x, y] = P([n[1], n[2]]); return `<circle cx="${x}" cy="${y}" r="${U * 1.15}"/>`; }).join("") + `</g>`;
+  s += `<g>` + M.edges.map(([a, b]) => { const [x1, y1] = P(pos[a]), [x2, y2] = P(pos[b]); return `<line class="m-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; }).join("") + `</g>`;
+  M.nodes.forEach(([id, x0, y0]) => {
+    const name = LOC.l0[id], [x, y] = P([x0, y0]), kind = nodeKind(id);
+    const st = enc[name]?.status || "";
+    const cls = ["m-node", st, loc === name ? "here" : "", mapSel === name ? "sel" : ""].join(" ");
+    let shape, ring, inner = "", label = "";
+    if (kind === "city") {
+      shape = `<rect class="s" x="${x - 10}" y="${y - 10}" width="20" height="20" rx="4"/>`;
+      ring = `<rect class="ring" x="${x - 15}" y="${y - 15}" width="30" height="30" rx="7"/>`;
+      label = `<text class="lab" x="${x}" y="${+y + 23}" text-anchor="middle">${esc(name.replace(/^(Ciudad|Pueblo|Isla) /, ""))}</text>`;
+    } else if (kind === "route") {
+      shape = `<circle class="s" cx="${x}" cy="${y}" r="10"/>`;
+      ring = `<circle class="ring" cx="${x}" cy="${y}" r="15"/>`;
+      inner = `<text class="in" x="${x}" y="${+y + 3.2}" text-anchor="middle">${name.replace("Ruta ", "")}</text>`;
+    } else {
+      shape = `<rect class="s" x="${x - 8}" y="${y - 8}" width="16" height="16" transform="rotate(45 ${x} ${y})"/>`;
+      ring = `<rect class="ring" x="${x - 13}" y="${y - 13}" width="26" height="26" transform="rotate(45 ${x} ${y})"/>`;
+    }
+    s += `<g class="${cls}" data-mz="${esc(name)}" tabindex="0" role="button" aria-label="${esc(name)}${st ? ", " + (st === "caught" ? "capturado" : "fallido") : ""}"><title>${esc(name)}</title>${ring}${shape}${inner}${label}</g>`;
+  });
+  s += `</svg>`;
+  $("map-box").innerHTML = s;
+  renderMapSel();
+}
+
+function renderMapSel() {
+  const box = $("map-sel");
+  if (!mapSel) { box.innerHTML = `<span class="muted">Toca una zona del mapa para ver su estado${mapWho === me ? " o marcarla" : ""}.</span>`; return; }
+  const st = (state.enc[mapWho] || {})[mapSel]?.status || "";
+  const ez = esc(mapSel);
+  if (mapWho === me) {
+    box.innerHTML = `<b>${ez}</b><span class="seg">
+      <button class="c" data-z="${ez}" data-s="caught" aria-pressed="${st === "caught"}">Capturado</button>
+      <button class="f" data-z="${ez}" data-s="failed" aria-pressed="${st === "failed"}">Fallido</button></span>`;
+  } else {
+    box.innerHTML = `<b>${ez}</b><span class="chip ${st === "caught" ? "ok" : st === "failed" ? "bad" : ""}">${esc(mapWho)}: ${st === "caught" ? "capturado" : st === "failed" ? "fallido" : "sin visitar"}</span>`;
+  }
+}
+
+$("map-box").addEventListener("click", e => {
+  const g = e.target.closest("[data-mz]"); if (!g) return;
+  mapSel = g.dataset.mz; renderMap();
+});
+$("map-box").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.dataset.mz) { e.preventDefault(); mapSel = e.target.dataset.mz; renderMap(); $("map-box").querySelector(`[data-mz="${CSS.escape(mapSel)}"]`)?.focus(); }
+});
+document.querySelectorAll("[data-map]").forEach(b => b.addEventListener("click", () => {
+  mapRegion = b.dataset.map; mapSel = null;
+  document.querySelectorAll("[data-map]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderMap();
+}));
+$("map-who").addEventListener("click", e => { const b = e.target.closest("[data-who]"); if (b) { mapWho = b.dataset.who; renderMap(); } });
 
 setInterval(() => { if (me) renderRival(); }, 60000);
 
