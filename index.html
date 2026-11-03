@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Randomlocke HeartGold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: Pokégear-style panels — a rival band across the top, then my run (lives, badges, team) beside the route log. */
+:root {
+  --bg: #ECEEF3; --panel: #FFFFFF; --ink: #16213A; --muted: #5A6580; --line: #D5DAE5;
+  --gold: #A87A0C; --gold-fill: #E7B83E; --gold-soft: #F6EBCB;
+  --rival: #4C6E99; --rival-soft: #E2EAF4;
+  --ok: #23804F; --ok-soft: #DCF0E4; --bad: #BB3A33; --bad-soft: #F7E0DE;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1322; --panel: #161F35; --ink: #E7EBF4; --muted: #94A0BB; --line: #27324F;
+  --gold: #E4B850; --gold-fill: #E4B850; --gold-soft: #3A3120;
+  --rival: #92B4DC; --rival-soft: #1F2C46;
+  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0D1322; --panel: #161F35; --ink: #E7EBF4; --muted: #94A0BB; --line: #27324F;
+  --gold: #E4B850; --gold-fill: #E4B850; --gold-soft: #3A3120;
+  --rival: #92B4DC; --rival-soft: #1F2C46;
+  --ok: #52C58E; --ok-soft: #173326; --bad: #F07A72; --bad-soft: #3A1D1D; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+a.btn { text-decoration: none; color: var(--ink); display: inline-block; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) 48px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 16px; }
+h1, h2, .px { font-family: var(--display); font-weight: 700; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.15rem; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 12px; font-weight: 600; }
+.btn:hover { border-color: var(--gold); }
+.btn.primary { background: var(--gold-fill); border-color: var(--gold-fill); color: #1A1406; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Pantalla de elección ---------- */
+#pick { min-height: 80vh; display: grid; place-content: center; gap: 28px; text-align: center; }
+#pick h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.05; }
+#pick h1 span { color: var(--gold); }
+.pick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 16px; justify-content: center; }
+.pick-card { border: 2px solid var(--line); background: var(--panel); border-radius: 14px; padding: 26px 16px; display: grid; gap: 6px; }
+.pick-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.pick-card .px { font-size: 1.6rem; }
+@media (prefers-reduced-motion: no-preference) { .pick-card { transition: transform .15s, border-color .15s; } }
+
+/* ---------- Cabecera ---------- */
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand .px { font-size: 1.35rem; }
+.brand .px span { color: var(--gold); }
+.me { display: flex; align-items: center; gap: 10px; }
+.me strong { font-family: var(--display); font-size: 1.1rem; }
+.sync { font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--ok); }
+.dot.err { background: var(--bad); }
+.banner { background: var(--bad-soft); color: var(--bad); border-radius: var(--r); padding: 12px 14px; font-weight: 500; }
+
+/* ---------- Rival ---------- */
+.rival { background: var(--rival-soft); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px;
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 24px; align-items: center; }
+.rival .who { display: grid; gap: 2px; }
+.rival .who .px { font-size: 1.5rem; color: var(--rival); }
+.rival-stats { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; }
+.stat { display: grid; gap: 2px; min-width: 0; }
+.stat b { font-family: var(--display); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.mini-badges { display: flex; gap: 4px; flex-wrap: wrap; max-width: 220px; }
+.mini-badges i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--rival); opacity: .5; }
+.mini-badges i.on { background: var(--gold-fill); border-color: var(--gold-fill); opacity: 1; }
+.mini-badges i.gap { margin-left: 6px; }
+.privacy { grid-column: 1 / -1; font-size: .8rem; color: var(--muted); }
+@media (max-width: 640px) { .rival { grid-template-columns: 1fr; } }
+
+/* ---------- Columnas ---------- */
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.stack { display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+/* ---------- Vidas ---------- */
+.lives-top { display: flex; align-items: center; gap: 14px; }
+.lives-num { font-family: var(--display); font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; min-width: 2.2ch; text-align: center; }
+.lives-num small { font-size: 1rem; color: var(--muted); }
+.round { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.round:hover:not(:disabled) { border-color: var(--gold); }
+.round:disabled { opacity: .4; cursor: not-allowed; }
+.pips { display: grid; grid-template-columns: repeat(15, 1fr); gap: 5px; }
+.pip { aspect-ratio: 1; max-width: 100%; border-radius: 50%; position: relative; background: linear-gradient(var(--bad) 0 46%, var(--ink) 46% 54%, var(--panel) 54%); border: 1.5px solid var(--ink); }
+.pip::after { content: ""; position: absolute; inset: 34%; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--ink); }
+.pip.lost { background: var(--line); border-color: var(--line); }
+.pip.lost::after { border-color: var(--line); background: var(--line); }
+
+/* ---------- Medallas ---------- */
+.badge-region { display: grid; gap: 8px; }
+.badges { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.badge { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 2px 6px; display: grid; justify-items: center; gap: 4px; font-size: .68rem; font-weight: 600; color: var(--muted); min-width: 0; }
+.badge .gem { width: 22px; height: 22px; clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); background: var(--line); }
+.badge.on { border-color: var(--gold); background: var(--gold-soft); color: var(--ink); }
+.badge.on .gem { background: var(--gold-fill); }
+.badge span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+@media (max-width: 480px) { .badges { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* ---------- Equipo ---------- */
+.drop { border: 2px dashed var(--line); border-radius: var(--r); padding: 18px; text-align: center; display: grid; gap: 6px; cursor: pointer; }
+.drop:hover, .drop.over { border-color: var(--gold); background: var(--gold-soft); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mon { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.mon b { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mon small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.hpbar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.hpbar i { display: block; height: 100%; background: var(--ok); }
+@media (max-width: 480px) { .team { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+pre.paste { margin: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; font: .82rem/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; white-space: pre; overflow-x: auto; max-height: 360px; }
+#team-out { display: grid; gap: 12px; }
+#team-out[hidden] { display: none; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; max-height: 340px; overflow-y: auto; }
+table.caps { width: 100%; border-collapse: collapse; font-size: .84rem; font-variant-numeric: tabular-nums; }
+.caps th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.caps td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.caps tr:last-child td { border-bottom: 0; }
+.caps td.zone-ok { color: var(--ok); font-weight: 600; }
+.tag { font-size: .72rem; font-weight: 600; padding: 1px 7px; border-radius: 99px; background: var(--bg); color: var(--muted); }
+.tag.team { background: var(--gold-soft); color: var(--gold); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.note { font-size: .82rem; color: var(--muted); }
+.err-text { color: var(--bad); font-weight: 500; }
+
+/* ---------- Rutas ---------- */
+.counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { font-size: .78rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--bg); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tabs button { border: 0; background: transparent; padding: 6px 11px; font-weight: 600; font-size: .85rem; color: var(--muted); }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+#search { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 10px; }
+.routes { display: grid; max-height: 74vh; overflow-y: auto; border-top: 1px solid var(--line); margin: 0 -18px -18px; }
+.zone-h { position: sticky; top: 0; z-index: 1; background: var(--panel); padding: 10px 18px 6px; border-bottom: 1px solid var(--line); }
+.route { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 18px; border-bottom: 1px solid var(--line); }
+.route.caught { background: var(--ok-soft); }
+.route.failed { background: var(--bad-soft); }
+.route .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.route .here { font-size: .7rem; font-weight: 700; color: var(--gold); margin-left: 6px; letter-spacing: .05em; text-transform: uppercase; }
+.pin { border: 0; background: transparent; width: 22px; height: 22px; padding: 0; color: var(--muted); opacity: .45; }
+.pin:hover, .pin.on { opacity: 1; color: var(--gold); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: transparent; padding: 5px 10px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.c[aria-pressed="true"] { background: var(--ok); color: #fff; }
+.seg button.f[aria-pressed="true"] { background: var(--bad); color: #fff; }
+@media (max-width: 420px) { .seg button { padding: 5px 7px; } }
+
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: .88rem; max-width: calc(100% - 32px); z-index: 20; }
+</style>
+</head>
+<body>
+
+<!-- Elección de jugador -->
+<section id="pick" hidden>
+  <div>
+    <div class="label">Pokémon HeartGold · Randomlocke</div>
+    <h1>¿Quién está <span>jugando</span>?</h1>
+  </div>
+  <div class="pick-grid">
+    <button class="pick-card" id="pick-Landorus" data-player="Landorus"><span class="px">Landorus</span><span class="muted">Registrar mi partida</span></button>
+    <button class="pick-card" id="pick-Gorkis" data-player="Gorkis"><span class="px">Gorkis</span><span class="muted">Registrar mi partida</span></button>
+  </div>
+  <p class="note">Puedes cambiar de jugador cuando quieras desde la cabecera.</p>
+</section>
+
+<!-- Aplicación -->
+<div id="app" class="wrap" hidden>
+  <header class="top">
+    <div class="brand"><span class="px">Randomlocke <span>HG</span></span></div>
+    <div class="me">
+      <span class="sync"><span class="dot" id="sync-dot"></span><span id="sync-text">Conectando…</span></span>
+      <span class="label">Jugando</span><strong id="me-name"></strong>
+      <button class="btn" id="switch">Cambiar</button>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="rival" aria-label="Progreso del rival">
+    <div class="who"><span class="label">Rival</span><span class="px" id="rv-name">—</span></div>
+    <div class="rival-stats">
+      <div class="stat"><span class="label">Vidas</span><b id="rv-lives">—</b></div>
+      <div class="stat"><span class="label">Medallas</span><b id="rv-badges-n">—</b></div>
+      <div class="stat"><span class="label">Medallas obtenidas</span><div class="mini-badges" id="rv-badges"></div></div>
+      <div class="stat"><span class="label">Zona actual</span><b id="rv-zone">—</b></div>
+      <div class="stat"><span class="label">Zonas</span><b id="rv-zones">—</b></div>
+      <div class="stat"><span class="label">Última actividad</span><span id="rv-when" class="muted">—</span></div>
+    </div>
+    <div class="privacy">Solo se ve el avance. El equipo del rival nunca sale de su ordenador: el .save se lee en su navegador y no se guarda en ningún sitio.</div>
+  </section>
+
+  <div class="cols">
+    <div class="stack">
+      <section class="panel" aria-labelledby="h-lives">
+        <div class="panel-head"><h2 id="h-lives">Vidas</h2><span class="note">Empiezas con 30</span></div>
+        <div class="lives-top">
+          <button class="round" id="life-minus" aria-label="Perder una vida">−</button>
+          <div class="lives-num" id="lives-num">30<small>/30</small></div>
+          <button class="round" id="life-plus" aria-label="Recuperar una vida">+</button>
+        </div>
+        <div class="pips" id="pips" aria-hidden="true"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-badges">
+        <div class="panel-head"><h2 id="h-badges">Medallas</h2><span class="chip" id="badge-count">0/16</span></div>
+        <div class="badge-region"><span class="label">Johto</span><div class="badges" id="badges-johto"></div></div>
+        <div class="badge-region"><span class="label">Kanto</span><div class="badges" id="badges-kanto"></div></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-team">
+        <div class="panel-head"><h2 id="h-team">Equipo actual</h2><span class="note">Se lee en tu navegador, no se sube</span></div>
+        <label class="drop" id="drop" for="save-file">
+          <input type="file" id="save-file" accept=".sav,.dsv,.bin,.SAV">
+          <strong>Sube tu archivo .sav</strong>
+          <span class="note">o arrástralo aquí · HeartGold / SoulSilver (.sav o .dsv)</span>
+        </label>
+        <div id="team-out" hidden>
+          <div class="team" id="team-cards"></div>
+          <div class="row" style="justify-content:space-between">
+            <span class="label">Pokepaste</span>
+            <div class="row">
+              <button class="btn" id="apply-badges" hidden>Usar medallas del save</button>
+              <button class="btn primary" id="copy-paste">Copiar</button>
+              <a class="btn" href="https://pokepast.es/" target="_blank" rel="noopener">Abrir pokepast.es</a>
+            </div>
+          </div>
+          <pre class="paste" id="paste"></pre>
+          <p class="note">Los motes no se exportan: cada Pokémon aparece con el nombre de su especie.</p>
+          <div class="panel-head" style="margin-top:6px">
+            <span class="label">Dónde los capturaste</span>
+            <button class="btn primary" id="apply-zones" hidden></button>
+          </div>
+          <div class="tbl-wrap"><table class="caps">
+            <thead><tr><th>Pokémon</th><th>Dónde</th><th>Nv.</th><th>Fecha</th><th>Ball</th><th>Ahora</th></tr></thead>
+            <tbody id="caps"></tbody>
+          </table></div>
+          <p class="note" id="caps-note"></p>
+        </div>
+        <p class="err-text" id="team-err" hidden></p>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="h-routes">
+      <div class="panel-head">
+        <h2 id="h-routes">Capturas por zona</h2>
+        <div class="counts"><span class="chip ok" id="c-caught">0 capturas</span><span class="chip bad" id="c-failed">0 fallos</span><span class="chip" id="c-left">0 por visitar</span></div>
+      </div>
+      <div class="filters">
+        <div class="tabs" role="group" aria-label="Región">
+          <button data-f="all" aria-pressed="true">Todas</button>
+          <button data-f="Johto" aria-pressed="false">Johto</button>
+          <button data-f="Kanto" aria-pressed="false">Kanto</button>
+          <button data-f="pend" aria-pressed="false">Pendientes</button>
+        </div>
+        <input id="search" type="search" placeholder="Buscar zona…" aria-label="Buscar zona">
+      </div>
+      <div class="routes" id="routes"></div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const DEX={"sp":["","Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran\u2640","Nidorina","Nidoqueen","Nidoran\u2642","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch\u2019d","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew","Chikorita","Bayleef","Meganium","Cyndaquil","Quilava","Typhlosion","Totodile","Croconaw","Feraligatr","Sentret","Furret","Hoothoot","Noctowl","Ledyba","Ledian","Spinarak","Ariados","Crobat","Chinchou","Lanturn","Pichu","Cleffa","Igglybuff","Togepi","Togetic","Natu","Xatu","Mareep","Flaaffy","Ampharos","Bellossom","Marill","Azumarill","Sudowoodo","Politoed","Hoppip","Skiploom","Jumpluff","Aipom","Sunkern","Sunflora","Yanma","Wooper","Quagsire","Espeon","Umbreon","Murkrow","Slowking","Misdreavus","Unown","Wobbuffet","Girafarig","Pineco","Forretress","Dunsparce","Gligar","Steelix","Snubbull","Granbull","Qwilfish","Scizor","Shuckle","Heracross","Sneasel","Teddiursa","Ursaring","Slugma","Magcargo","Swinub","Piloswine","Corsola","Remoraid","Octillery","Delibird","Mantine","Skarmory","Houndour","Houndoom","Kingdra","Phanpy","Donphan","Porygon2","Stantler","Smeargle","Tyrogue","Hitmontop","Smoochum","Elekid","Magby","Miltank","Blissey","Raikou","Entei","Suicune","Larvitar","Pupitar","Tyranitar","Lugia","Ho-Oh","Celebi","Treecko","Grovyle","Sceptile","Torchic","Combusken","Blaziken","Mudkip","Marshtomp","Swampert","Poochyena","Mightyena","Zigzagoon","Linoone","Wurmple","Silcoon","Beautifly","Cascoon","Dustox","Lotad","Lombre","Ludicolo","Seedot","Nuzleaf","Shiftry","Taillow","Swellow","Wingull","Pelipper","Ralts","Kirlia","Gardevoir","Surskit","Masquerain","Shroomish","Breloom","Slakoth","Vigoroth","Slaking","Nincada","Ninjask","Shedinja","Whismur","Loudred","Exploud","Makuhita","Hariyama","Azurill","Nosepass","Skitty","Delcatty","Sableye","Mawile","Aron","Lairon","Aggron","Meditite","Medicham","Electrike","Manectric","Plusle","Minun","Volbeat","Illumise","Roselia","Gulpin","Swalot","Carvanha","Sharpedo","Wailmer","Wailord","Numel","Camerupt","Torkoal","Spoink","Grumpig","Spinda","Trapinch","Vibrava","Flygon","Cacnea","Cacturne","Swablu","Altaria","Zangoose","Seviper","Lunatone","Solrock","Barboach","Whiscash","Corphish","Crawdaunt","Baltoy","Claydol","Lileep","Cradily","Anorith","Armaldo","Feebas","Milotic","Castform","Kecleon","Shuppet","Banette","Duskull","Dusclops","Tropius","Chimecho","Absol","Wynaut","Snorunt","Glalie","Spheal","Sealeo","Walrein","Clamperl","Huntail","Gorebyss","Relicanth","Luvdisc","Bagon","Shelgon","Salamence","Beldum","Metang","Metagross","Regirock","Regice","Registeel","Latias","Latios","Kyogre","Groudon","Rayquaza","Jirachi","Deoxys","Turtwig","Grotle","Torterra","Chimchar","Monferno","Infernape","Piplup","Prinplup","Empoleon","Starly","Staravia","Staraptor","Bidoof","Bibarel","Kricketot","Kricketune","Shinx","Luxio","Luxray","Budew","Roserade","Cranidos","Rampardos","Shieldon","Bastiodon","Burmy","Wormadam","Mothim","Combee","Vespiquen","Pachirisu","Buizel","Floatzel","Cherubi","Cherrim","Shellos","Gastrodon","Ambipom","Drifloon","Drifblim","Buneary","Lopunny","Mismagius","Honchkrow","Glameow","Purugly","Chingling","Stunky","Skuntank","Bronzor","Bronzong","Bonsly","Mime Jr.","Happiny","Chatot","Spiritomb","Gible","Gabite","Garchomp","Munchlax","Riolu","Lucario","Hippopotas","Hippowdon","Skorupi","Drapion","Croagunk","Toxicroak","Carnivine","Finneon","Lumineon","Mantyke","Snover","Abomasnow","Weavile","Magnezone","Lickilicky","Rhyperior","Tangrowth","Electivire","Magmortar","Togekiss","Yanmega","Leafeon","Glaceon","Gliscor","Mamoswine","Porygon-Z","Gallade","Probopass","Dusknoir","Froslass","Rotom","Uxie","Mesprit","Azelf","Dialga","Palkia","Heatran","Regigigas","Giratina","Cresselia","Phione","Manaphy","Darkrai","Shaymin","Arceus"],"mv":["","Pound","Karate Chop","Double Slap","Comet Punch","Mega Punch","Pay Day","Fire Punch","Ice Punch","Thunder Punch","Scratch","Vise Grip","Guillotine","Razor Wind","Swords Dance","Cut","Gust","Wing Attack","Whirlwind","Fly","Bind","Slam","Vine Whip","Stomp","Double Kick","Mega Kick","Jump Kick","Rolling Kick","Sand Attack","Headbutt","Horn Attack","Fury Attack","Horn Drill","Tackle","Body Slam","Wrap","Take Down","Thrash","Double-Edge","Tail Whip","Poison Sting","Twineedle","Pin Missile","Leer","Bite","Growl","Roar","Sing","Supersonic","Sonic Boom","Disable","Acid","Ember","Flamethrower","Mist","Water Gun","Hydro Pump","Surf","Ice Beam","Blizzard","Psybeam","Bubble Beam","Aurora Beam","Hyper Beam","Peck","Drill Peck","Submission","Low Kick","Counter","Seismic Toss","Strength","Absorb","Mega Drain","Leech Seed","Growth","Razor Leaf","Solar Beam","Poison Powder","Stun Spore","Sleep Powder","Petal Dance","String Shot","Dragon Rage","Fire Spin","Thunder Shock","Thunderbolt","Thunder Wave","Thunder","Rock Throw","Earthquake","Fissure","Dig","Toxic","Confusion","Psychic","Hypnosis","Meditate","Agility","Quick Attack","Rage","Teleport","Night Shade","Mimic","Screech","Double Team","Recover","Harden","Minimize","Smokescreen","Confuse Ray","Withdraw","Defense Curl","Barrier","Light Screen","Haze","Reflect","Focus Energy","Bide","Metronome","Mirror Move","Self-Destruct","Egg Bomb","Lick","Smog","Sludge","Bone Club","Fire Blast","Waterfall","Clamp","Swift","Skull Bash","Spike Cannon","Constrict","Amnesia","Kinesis","Soft-Boiled","High Jump Kick","Glare","Dream Eater","Poison Gas","Barrage","Leech Life","Lovely Kiss","Sky Attack","Transform","Bubble","Dizzy Punch","Spore","Flash","Psywave","Splash","Acid Armor","Crabhammer","Explosion","Fury Swipes","Bonemerang","Rest","Rock Slide","Hyper Fang","Sharpen","Conversion","Tri Attack","Super Fang","Slash","Substitute","Struggle","Sketch","Triple Kick","Thief","Spider Web","Mind Reader","Nightmare","Flame Wheel","Snore","Curse","Flail","Conversion 2","Aeroblast","Cotton Spore","Reversal","Spite","Powder Snow","Protect","Mach Punch","Scary Face","Feint Attack","Sweet Kiss","Belly Drum","Sludge Bomb","Mud-Slap","Octazooka","Spikes","Zap Cannon","Foresight","Destiny Bond","Perish Song","Icy Wind","Detect","Bone Rush","Lock-On","Outrage","Sandstorm","Giga Drain","Endure","Charm","Rollout","False Swipe","Swagger","Milk Drink","Spark","Fury Cutter","Steel Wing","Mean Look","Attract","Sleep Talk","Heal Bell","Return","Present","Frustration","Safeguard","Pain Split","Sacred Fire","Magnitude","Dynamic Punch","Megahorn","Dragon Breath","Baton Pass","Encore","Pursuit","Rapid Spin","Sweet Scent","Iron Tail","Metal Claw","Vital Throw","Morning Sun","Synthesis","Moonlight","Hidden Power","Cross Chop","Twister","Rain Dance","Sunny Day","Crunch","Mirror Coat","Psych Up","Extreme Speed","Ancient Power","Shadow Ball","Future Sight","Rock Smash","Whirlpool","Beat Up","Fake Out","Uproar","Stockpile","Spit Up","Swallow","Heat Wave","Hail","Torment","Flatter","Will-O-Wisp","Memento","Facade","Focus Punch","Smelling Salts","Follow Me","Nature Power","Charge","Taunt","Helping Hand","Trick","Role Play","Wish","Assist","Ingrain","Superpower","Magic Coat","Recycle","Revenge","Brick Break","Yawn","Knock Off","Endeavor","Eruption","Skill Swap","Imprison","Refresh","Grudge","Snatch","Secret Power","Dive","Arm Thrust","Camouflage","Tail Glow","Luster Purge","Mist Ball","Feather Dance","Teeter Dance","Blaze Kick","Mud Sport","Ice Ball","Needle Arm","Slack Off","Hyper Voice","Poison Fang","Crush Claw","Blast Burn","Hydro Cannon","Meteor Mash","Astonish","Weather Ball","Aromatherapy","Fake Tears","Air Cutter","Overheat","Odor Sleuth","Rock Tomb","Silver Wind","Metal Sound","Grass Whistle","Tickle","Cosmic Power","Water Spout","Signal Beam","Shadow Punch","Extrasensory","Sky Uppercut","Sand Tomb","Sheer Cold","Muddy Water","Bullet Seed","Aerial Ace","Icicle Spear","Iron Defense","Block","Howl","Dragon Claw","Frenzy Plant","Bulk Up","Bounce","Mud Shot","Poison Tail","Covet","Volt Tackle","Magical Leaf","Water Sport","Calm Mind","Leaf Blade","Dragon Dance","Rock Blast","Shock Wave","Water Pulse","Doom Desire","Psycho Boost","Roost","Gravity","Miracle Eye","Wake-Up Slap","Hammer Arm","Gyro Ball","Healing Wish","Brine","Natural Gift","Feint","Pluck","Tailwind","Acupressure","Metal Burst","U-turn","Close Combat","Payback","Assurance","Embargo","Fling","Psycho Shift","Trump Card","Heal Block","Wring Out","Power Trick","Gastro Acid","Lucky Chant","Me First","Copycat","Power Swap","Guard Swap","Punishment","Last Resort","Worry Seed","Sucker Punch","Toxic Spikes","Heart Swap","Aqua Ring","Magnet Rise","Flare Blitz","Force Palm","Aura Sphere","Rock Polish","Poison Jab","Dark Pulse","Night Slash","Aqua Tail","Seed Bomb","Air Slash","X-Scissor","Bug Buzz","Dragon Pulse","Dragon Rush","Power Gem","Drain Punch","Vacuum Wave","Focus Blast","Energy Ball","Brave Bird","Earth Power","Switcheroo","Giga Impact","Nasty Plot","Bullet Punch","Avalanche","Ice Shard","Shadow Claw","Thunder Fang","Ice Fang","Fire Fang","Shadow Sneak","Mud Bomb","Psycho Cut","Zen Headbutt","Mirror Shot","Flash Cannon","Rock Climb","Defog","Trick Room","Draco Meteor","Discharge","Lava Plume","Leaf Storm","Power Whip","Rock Wrecker","Cross Poison","Gunk Shot","Iron Head","Magnet Bomb","Stone Edge","Captivate","Stealth Rock","Grass Knot","Chatter","Judgment","Bug Bite","Charge Beam","Wood Hammer","Aqua Jet","Attack Order","Defend Order","Heal Order","Head Smash","Double Hit","Roar of Time","Spacial Rend","Lunar Dance","Crush Grip","Magma Storm","Dark Void","Seed Flare","Ominous Wind","Shadow Force"],"ab":["","Stench","Drizzle","Speed Boost","Battle Armor","Sturdy","Damp","Limber","Sand Veil","Static","Volt Absorb","Water Absorb","Oblivious","Cloud Nine","Compound Eyes","Insomnia","Color Change","Immunity","Flash Fire","Shield Dust","Own Tempo","Suction Cups","Intimidate","Shadow Tag","Rough Skin","Wonder Guard","Levitate","Effect Spore","Synchronize","Clear Body","Natural Cure","Lightning Rod","Serene Grace","Swift Swim","Chlorophyll","Illuminate","Trace","Huge Power","Poison Point","Inner Focus","Magma Armor","Water Veil","Magnet Pull","Soundproof","Rain Dish","Sand Stream","Pressure","Thick Fat","Early Bird","Flame Body","Run Away","Keen Eye","Hyper Cutter","Pickup","Truant","Hustle","Cute Charm","Plus","Minus","Forecast","Sticky Hold","Shed Skin","Guts","Marvel Scale","Liquid Ooze","Overgrow","Blaze","Torrent","Swarm","Rock Head","Drought","Arena Trap","Vital Spirit","White Smoke","Pure Power","Shell Armor","Air Lock","Tangled Feet","Motor Drive","Rivalry","Steadfast","Snow Cloak","Gluttony","Anger Point","Unburden","Heatproof","Simple","Dry Skin","Download","Iron Fist","Poison Heal","Adaptability","Skill Link","Hydration","Solar Power","Quick Feet","Normalize","Sniper","Magic Guard","No Guard","Stall","Technician","Leaf Guard","Klutz","Mold Breaker","Super Luck","Aftermath","Anticipation","Forewarn","Unaware","Tinted Lens","Filter","Slow Start","Scrappy","Storm Drain","Ice Body","Solid Rock","Snow Warning","Honey Gather","Frisk","Reckless","Multitype","Flower Gift","Bad Dreams"],"it":["","Master Ball","Ultra Ball","Great Ball","Pok\u00e9 Ball","Safari Ball","Net Ball","Dive Ball","Nest Ball","Repeat Ball","Timer Ball","Luxury Ball","Premier Ball","Dusk Ball","Heal Ball","Quick Ball","Cherish Ball","Potion","Antidote","Burn Heal","Ice Heal","Awakening","Paralyze Heal","Full Restore","Max Potion","Hyper Potion","Super Potion","Full Heal","Revive","Max Revive","Fresh Water","Soda Pop","Lemonade","Moomoo Milk","Energy Powder","Energy Root","Heal Powder","Revival Herb","Ether","Max Ether","Elixir","Max Elixir","Lava Cookie","Berry Juice","Sacred Ash","HP Up","Protein","Iron","Carbos","Calcium","Rare Candy","PP Up","Zinc","PP Max","Old Gateau","Guard Spec.","Dire Hit","X Attack","X Defense","X Speed","X Accuracy","X Sp. Atk","X Sp. Def","Pok\u00e9 Doll","Fluffy Tail","Blue Flute","Yellow Flute","Red Flute","Black Flute","White Flute","Shoal Salt","Shoal Shell","Red Shard","Blue Shard","Yellow Shard","Green Shard","Super Repel","Max Repel","Escape Rope","Repel","Sun Stone","Moon Stone","Fire Stone","Thunder Stone","Water Stone","Leaf Stone","Tiny Mushroom","Big Mushroom","Pearl","Big Pearl","Stardust","Star Piece","Nugget","Heart Scale","Honey","Growth Mulch","Damp Mulch","Stable Mulch","Gooey Mulch","Root Fossil","Claw Fossil","Helix Fossil","Dome Fossil","Old Amber","Armor Fossil","Skull Fossil","Rare Bone","Shiny Stone","Dusk Stone","Dawn Stone","Oval Stone","Odd Keystone","Griseous Orb","","","","","","","","","","","","","","","","","","","","","","","Adamant Orb","Lustrous Orb","Grass Mail","Flame Mail","Bubble Mail","Bloom Mail","Tunnel Mail","Steel Mail","Heart Mail","Snow Mail","Space Mail","Air Mail","Mosaic Mail","Brick Mail","Cheri Berry","Chesto Berry","Pecha Berry","Rawst Berry","Aspear Berry","Leppa Berry","Oran Berry","Persim Berry","Lum Berry","Sitrus Berry","Figy Berry","Wiki Berry","Mago Berry","Aguav Berry","Iapapa Berry","Razz Berry","Bluk Berry","Nanab Berry","Wepear Berry","Pinap Berry","Pomeg Berry","Kelpsy Berry","Qualot Berry","Hondew Berry","Grepa Berry","Tamato Berry","Cornn Berry","Magost Berry","Rabuta Berry","Nomel Berry","Spelon Berry","Pamtre Berry","Watmel Berry","Durin Berry","Belue Berry","Occa Berry","Passho Berry","Wacan Berry","Rindo Berry","Yache Berry","Chople Berry","Kebia Berry","Shuca Berry","Coba Berry","Payapa Berry","Tanga Berry","Charti Berry","Kasib Berry","Haban Berry","Colbur Berry","Babiri Berry","Chilan Berry","Liechi Berry","Ganlon Berry","Salac Berry","Petaya Berry","Apicot Berry","Lansat Berry","Starf Berry","Enigma Berry","Micle Berry","Custap Berry","Jaboca Berry","Rowap Berry","Bright Powder","White Herb","Macho Brace","Exp. Share","Quick Claw","Soothe Bell","Mental Herb","Choice Band","King\u2019s Rock","Silver Powder","Amulet Coin","Cleanse Tag","Soul Dew","Deep Sea Tooth","Deep Sea Scale","Smoke Ball","Everstone","Focus Band","Lucky Egg","Scope Lens","Metal Coat","Leftovers","Dragon Scale","Light Ball","Soft Sand","Hard Stone","Miracle Seed","Black Glasses","Black Belt","Magnet","Mystic Water","Sharp Beak","Poison Barb","Never-Melt Ice","Spell Tag","Twisted Spoon","Charcoal","Dragon Fang","Silk Scarf","Upgrade","Shell Bell","Sea Incense","Lax Incense","Lucky Punch","Metal Powder","Thick Club","Leek","Red Scarf","Blue Scarf","Pink Scarf","Green Scarf","Yellow Scarf","Wide Lens","Muscle Band","Wise Glasses","Expert Belt","Light Clay","Life Orb","Power Herb","Toxic Orb","Flame Orb","Quick Powder","Focus Sash","Zoom Lens","Metronome","Iron Ball","Lagging Tail","Destiny Knot","Black Sludge","Icy Rock","Smooth Rock","Heat Rock","Damp Rock","Grip Claw","Choice Scarf","Sticky Barb","Power Bracer","Power Belt","Power Lens","Power Band","Power Anklet","Power Weight","Shed Shell","Big Root","Choice Specs","Flame Plate","Splash Plate","Zap Plate","Meadow Plate","Icicle Plate","Fist Plate","Toxic Plate","Earth Plate","Sky Plate","Mind Plate","Insect Plate","Stone Plate","Spooky Plate","Draco Plate","Dread Plate","Iron Plate","Odd Incense","Rock Incense","Full Incense","Wave Incense","Rose Incense","Luck Incense","Pure Incense","Protector","Electirizer","Magmarizer","Dubious Disc","Reaper Cloth","Razor Claw","Razor Fang","TM01","TM02","TM03","TM04","TM05","TM06","TM07","TM08","TM09","TM10","TM11","TM12","TM13","TM14","TM15","TM16","TM17","TM18","TM19","TM20","TM21","TM22","TM23","TM24","TM25","TM26","TM27","TM28","TM29","TM30","TM31","TM32","TM33","TM34","TM35","TM36","TM37","TM38","TM39","TM40","TM41","TM42","TM43","TM44","TM45","TM46","TM47","TM48","TM49","TM50","TM51","TM52","TM53","TM54","TM55","TM56","TM57","TM58","TM59","TM60","TM61","TM62","TM63","TM64","TM65","TM66","TM67","TM68","TM69","TM70","TM71","TM72","TM73","TM74","TM75","TM76","TM77","TM78","TM79","TM80","TM81","TM82","TM83","TM84","TM85","TM86","TM87","TM88","TM89","TM90","TM91","TM92","HM01","HM02","HM03","HM04","HM05","HM06","HM07","HM08","Explorer Kit","Loot Sack","Rule Book","Pok\u00e9 Radar","Point Card","Journal","Seal Case","Fashion Case","Seal Bag","Pal Pad","Works Key","Old Charm","Galactic Key","Red Chain","Town Map","Vs. Seeker","Coin Case","Old Rod","Good Rod","Super Rod","Sprayduck","Poffin Case","Bicycle","Suite Key","Oak\u2019s Letter","Lunar Wing","Member Card","Azure Flute","S.S. Ticket","Contest Pass","Magma Stone","Parcel","Coupon 1","Coupon 2","Coupon 3","Storage Key","Secret Potion","Vs. Recorder","Gracidea","Secret Key","Apricorn Box","Unown Report","Berry Pots","Dowsing Machine","Blue Card","Slowpoke Tail","Clear Bell","Card Key","Basement Key","Squirt Bottle","Red Scale","Lost Item","Pass","Machine Part","Silver Wing","Rainbow Wing","Mystery Egg","Red Apricorn","Yellow Apricorn","Blue Apricorn","Green Apricorn","Pink Apricorn","White Apricorn","Black Apricorn","Fast Ball","Level Ball","Lure Ball","Heavy Ball","Love Ball","Friend Ball","Moon Ball","Sport Ball","Park Ball","Photo Album","GB Sounds","Tidal Bell","Rage Candy Bar","Data Card 01","Data Card 02","Data Card 03","Data Card 04","Data Card 05","Data Card 06","Data Card 07","Data Card 08","Data Card 09","Data Card 10","Data Card 11","Data Card 12","Data Card 13","Data Card 14","Data Card 15","Data Card 16","Data Card 17","Data Card 18","Data Card 19","Data Card 20","Data Card 21","Data Card 22","Data Card 23","Data Card 24","Data Card 25","Data Card 26","Data Card 27","Jade Orb","Lock Capsule","Red Orb","Blue Orb","Enigma Stone"],"na":["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"]};
+</script>
+<script>
+const LOC={"l0":["Lugar misterioso","Pueblo Hojaverde","Pueblo Arena","Pueblo Aromaflor","Pueblo Sosiego","Pueblo Caelestis","Ciudad Jubileo","Ciudad Canal","Ciudad Pirita","Ciudad Vetusta","Ciudad Corazón","Ciudad Pradera","Ciudad Rocavelo","Ciudad Marina","Ciudad Puntaneva","Liga Pokémon","Ruta 201","Ruta 202","Ruta 203","Ruta 204","Ruta 205","Ruta 206","Ruta 207","Ruta 208","Ruta 209","Ruta 210","Ruta 211","Ruta 212","Ruta 213","Ruta 214","Ruta 215","Ruta 216","Ruta 217","Ruta 218","Ruta 219","Ruta 220","Ruta 221","Ruta 222","Ruta 223","Ruta 224","Ruta 225","Ruta 226","Ruta 227","Ruta 228","Ruta 229","Ruta 230","Mina Pirita","Valle Eólico","Bosque Vetusto","Forja Fuego","Monte Corona","Columna Lanza","Gran Pantano","Ruinas Sosiego","Calle Victoria","Parque Compi","Plaza Amistad","Senda Desolada","Prado Aromaflor","Puerta Pirita","Isla Plenilunio","Fuente Despedida","Cueva Retorno","Paraíso Floral","Templo Puntaneva","Cueva Extravío","Mina Ruinamaníaco","Túnel Maníaco","Jardín Trofeo","Isla Hierro","Vieja Mansión","Base Galaxia","Orilla Veraz","Orilla Valor","Orilla Agudeza","Vía Manantial","Lago Veraz","Lago Valor","Lago Agudeza","Isla Lunanueva","Torre Batalla","Zona de Combate","Zona Sobrevivir","Zona de Descanso","Montaña Dura","Vía Costera","Sala del Origen","Caverna Veraz","Caverna Valor","Caverna Agudeza","Jubileo TV","Poké-reloj S.A.","GTS","Dojo PKMN","Museo Minero","Floristería","Tienda de Bicis","Auditorio","Pokochería","Templo","Guardería PKMN","C. C. Rocavelo","Casino","Biblioteca Canal","Faro Visión","Mercado Marino","Mansión Pokémon","Casa Huellas","Cafetería","Gran Lago","Restaurante","Parque Batalla","Frente Batalla","Fábrica Batalla","Castillo Batalla","Ruleta Batalla","Sala Batalla","Mundo Distorsión","Terminal Global","Mansión","Café Revancha","Sala de ROTOM","Edificio Galaxia","Ruinas Hierro","Ruinas Iceberg","Ruinas Pico Roca","Pueblo Primavera","Ciudad Cerezo","Ciudad Malva","Pueblo Azalea","Ciudad Orquídea","Ciudad Trigal","Ciudad Olivo","Ciudad Iris","Pueblo Caoba","Lago de la Furia","Ciudad Endrino","Monte Plateado","Pueblo Paleta","Ciudad Verde","Ciudad Plateada","Ciudad Celeste","Pueblo Lavanda","Ciudad Carmín","Ciudad Azulona","Ciudad Fucsia","Isla Canela","Meseta Añil","Ciudad Azafrán","Ruta 1","Ruta 2","Ruta 3","Ruta 4","Ruta 5","Ruta 6","Ruta 7","Ruta 8","Ruta 9","Ruta 10","Ruta 11","Ruta 12","Ruta 13","Ruta 14","Ruta 15","Ruta 16","Ruta 17","Ruta 18","Ruta 19","Ruta 20","Ruta 21","Ruta 22","Ruta 23","Ruta 24","Ruta 25","Ruta 26","Ruta 27","Ruta 28","Ruta 29","Ruta 30","Ruta 31","Ruta 32","Ruta 33","Ruta 34","Ruta 35","Ruta 36","Ruta 37","Ruta 38","Ruta 39","Ruta 40","Ruta 41","Ruta 42","Ruta 43","Ruta 44","Ruta 45","Ruta 46","Ruta 47","Ruta 48","Cueva Diglett","Mt. Moon","Cueva Celeste","Túnel Roca","Central Energía","Zona Safari","Islas Espuma","Torre Bellsprout","Torre Campana","Torre Quemada","Parque Nacional","Torre Radio","Ruinas Alfa","Cueva Unión","Pozo Slowpoke","Faro","Escondite Team Rocket","Encinar","Túnel Trigal","Mt. Mortero","Ruta Helada","Islas Remolino","Cueva Monte Plateado","Cueva Oscura","Calle Victoria","Guarida Dragón","Cataratas Tohjo","Bosque Verde","Carpa Pokéathlon","S.S. Aqua","Entrada Safari","Cueva Acantilado","Acceso al Frente","Senda Dindón","Ruinas de Sinjoh","Torre Oculta","Pokéwalker","Paso Acantilado"],"l2":["Pareja guardería","Intercambio","Intercambio","Kanto","Johto","Hoenn","Sinnoh","----------","Tierra lejana","Viajero","Quinoa","Cintia","Lugar misterioso","Sr. Pokémon","Cástor"],"l3":["Lugar encantador","Pokémon Ranger","Lugar lejano","Película Pokémon","Película PKMN 06","Película PKMN 07","Película PKMN 08","Película PKMN 09","Película PKMN 10","Película PKMN 11","Película PKMN 12","Película PKMN 13","Película PKMN 14","Película PKMN 15","Película PKMN 16","Animación PKMN","Space World","Space World 06","Space World 07","Space World 08","Space World 09","Space World 10","Space World 11","Space World 12","Space World 13","Space World 14","Space World 15","Space World 16","Pokémon Festa","Pokémon Festa 06","Pokémon Festa 07","Pokémon Festa 08","Pokémon Festa 09","Pokémon Festa 10","Pokémon Festa 11","Pokémon Festa 12","Pokémon Festa 13","Pokémon Festa 14","Pokémon Festa 15","Pokémon Festa 16","POKéPARK","POKéPARK 06","POKéPARK 07","POKéPARK 08","POKéPARK 09","POKéPARK 10","POKéPARK 11","POKéPARK 12","POKéPARK 13","POKéPARK 14","POKéPARK 15","POKéPARK 16","Pokémon Center","PC Tokio","PC Osaka","PC Fukuoka","PC Nagoya","PC Sapporo","PC Yokohama","Nintendo World","Evento PKMN","Evento PKMN 06","Evento PKMN 07","Evento PKMN 08","Evento PKMN 09","Evento PKMN 10","Evento PKMN 11","Evento PKMN 12","Evento PKMN 13","Evento PKMN 14","Evento PKMN 15","Evento PKMN 16","Evento Wi-Fi","Regalo Wi-Fi","Club fans PKMN","Sitio Evento","Concierto Evento"],"ball":["","Master Ball","Ultra Ball","Super Ball","Poké Ball","Safari Ball","Malla Ball","Buceo Ball","Nido Ball","Acopio Ball","Turno Ball","Lujo Ball","Honor Ball","Ocaso Ball","Sana Ball","Veloz Ball","Gloria Ball","Rapid Ball","Nivel Ball","Cebo Ball","Peso Ball","Amor Ball","Amigo Ball","Luna Ball","Competi Ball","Parque Ball"],"spEs":["","Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch’d","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew","Chikorita","Bayleef","Meganium","Cyndaquil","Quilava","Typhlosion","Totodile","Croconaw","Feraligatr","Sentret","Furret","Hoothoot","Noctowl","Ledyba","Ledian","Spinarak","Ariados","Crobat","Chinchou","Lanturn","Pichu","Cleffa","Igglybuff","Togepi","Togetic","Natu","Xatu","Mareep","Flaaffy","Ampharos","Bellossom","Marill","Azumarill","Sudowoodo","Politoed","Hoppip","Skiploom","Jumpluff","Aipom","Sunkern","Sunflora","Yanma","Wooper","Quagsire","Espeon","Umbreon","Murkrow","Slowking","Misdreavus","Unown","Wobbuffet","Girafarig","Pineco","Forretress","Dunsparce","Gligar","Steelix","Snubbull","Granbull","Qwilfish","Scizor","Shuckle","Heracross","Sneasel","Teddiursa","Ursaring","Slugma","Magcargo","Swinub","Piloswine","Corsola","Remoraid","Octillery","Delibird","Mantine","Skarmory","Houndour","Houndoom","Kingdra","Phanpy","Donphan","Porygon2","Stantler","Smeargle","Tyrogue","Hitmontop","Smoochum","Elekid","Magby","Miltank","Blissey","Raikou","Entei","Suicune","Larvitar","Pupitar","Tyranitar","Lugia","Ho-Oh","Celebi","Treecko","Grovyle","Sceptile","Torchic","Combusken","Blaziken","Mudkip","Marshtomp","Swampert","Poochyena","Mightyena","Zigzagoon","Linoone","Wurmple","Silcoon","Beautifly","Cascoon","Dustox","Lotad","Lombre","Ludicolo","Seedot","Nuzleaf","Shiftry","Taillow","Swellow","Wingull","Pelipper","Ralts","Kirlia","Gardevoir","Surskit","Masquerain","Shroomish","Breloom","Slakoth","Vigoroth","Slaking","Nincada","Ninjask","Shedinja","Whismur","Loudred","Exploud","Makuhita","Hariyama","Azurill","Nosepass","Skitty","Delcatty","Sableye","Mawile","Aron","Lairon","Aggron","Meditite","Medicham","Electrike","Manectric","Plusle","Minun","Volbeat","Illumise","Roselia","Gulpin","Swalot","Carvanha","Sharpedo","Wailmer","Wailord","Numel","Camerupt","Torkoal","Spoink","Grumpig","Spinda","Trapinch","Vibrava","Flygon","Cacnea","Cacturne","Swablu","Altaria","Zangoose","Seviper","Lunatone","Solrock","Barboach","Whiscash","Corphish","Crawdaunt","Baltoy","Claydol","Lileep","Cradily","Anorith","Armaldo","Feebas","Milotic","Castform","Kecleon","Shuppet","Banette","Duskull","Dusclops","Tropius","Chimecho","Absol","Wynaut","Snorunt","Glalie","Spheal","Sealeo","Walrein","Clamperl","Huntail","Gorebyss","Relicanth","Luvdisc","Bagon","Shelgon","Salamence","Beldum","Metang","Metagross","Regirock","Regice","Registeel","Latias","Latios","Kyogre","Groudon","Rayquaza","Jirachi","Deoxys","Turtwig","Grotle","Torterra","Chimchar","Monferno","Infernape","Piplup","Prinplup","Empoleon","Starly","Staravia","Staraptor","Bidoof","Bibarel","Kricketot","Kricketune","Shinx","Luxio","Luxray","Budew","Roserade","Cranidos","Rampardos","Shieldon","Bastiodon","Burmy","Wormadam","Mothim","Combee","Vespiquen","Pachirisu","Buizel","Floatzel","Cherubi","Cherrim","Shellos","Gastrodon","Ambipom","Drifloon","Drifblim","Buneary","Lopunny","Mismagius","Honchkrow","Glameow","Purugly","Chingling","Stunky","Skuntank","Bronzor","Bronzong","Bonsly","Mime Jr.","Happiny","Chatot","Spiritomb","Gible","Gabite","Garchomp","Munchlax","Riolu","Lucario","Hippopotas","Hippowdon","Skorupi","Drapion","Croagunk","Toxicroak","Carnivine","Finneon","Lumineon","Mantyke","Snover","Abomasnow","Weavile","Magnezone","Lickilicky","Rhyperior","Tangrowth","Electivire","Magmortar","Togekiss","Yanmega","Leafeon","Glaceon","Gliscor","Mamoswine","Porygon-Z","Gallade","Probopass","Dusknoir","Froslass","Rotom","Uxie","Mesprit","Azelf","Dialga","Palkia","Heatran","Regigigas","Giratina","Cresselia","Phione","Manaphy","Darkrai","Shaymin","Arceus"]};
+</script>
+<script>
+// ===== Lector de partidas Pokémon HeartGold / SoulSilver (Gen 4) =====
+const HG = (() => {
+  const GENERAL_SIZE = 0xF628, PARTITION = 0x40000, PARTY = 0x98, PK_SIZE = 236;
+  const ORDERS = ["ABCD","ABDC","ACBD","ACDB","ADBC","ADCB","BACD","BADC","BCAD","BCDA","BDAC","BDCA",
+                  "CABD","CADB","CBAD","CBDA","CDAB","CDBA","DABC","DACB","DBAC","DBCA","DCAB","DCBA"];
+  const FORMS = {
+    386: ["", "Attack", "Defense", "Speed"],
+    413: ["", "Sandy", "Trash"],
+    479: ["", "Heat", "Wash", "Frost", "Fan", "Mow"],
+    487: ["", "Origin"],
+    492: ["", "Sky"],
+  };
+  const FIX_NAMES = { 29: "Nidoran-F", 32: "Nidoran-M" };
+
+  const u16 = (b, o) => b[o] | (b[o + 1] << 8);
+  const u32 = (b, o) => (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
+
+  function crypt(src, start, end, seed) {
+    const out = src.slice();
+    let s = seed >>> 0;
+    for (let i = start; i < end; i += 2) {
+      s = (Math.imul(0x41C64E6D, s) + 0x6073) >>> 0;
+      const w = u16(out, i) ^ (s >>> 16);
+      out[i] = w & 0xFF; out[i + 1] = (w >> 8) & 0xFF;
+    }
+    return out;
+  }
+
+  function decodePokemon(raw) {
+    const pid = u32(raw, 0);
+    const checksum = u16(raw, 6);
+    if (pid === 0 && checksum === 0) return null;
+    let d = crypt(raw, 0x08, 0x88, checksum);
+    if (raw.length >= PK_SIZE) d = crypt(d, 0x88, PK_SIZE, pid);
+    let sum = 0;
+    for (let i = 0x08; i < 0x88; i += 2) sum = (sum + u16(d, i)) & 0xFFFF;
+    if (sum !== checksum) return { invalid: true };
+    // Deshacer el barajado de los 4 bloques de 32 bytes
+    const order = ORDERS[((pid & 0x3E000) >>> 13) % 24];
+    const blocks = {};
+    for (let i = 0; i < 4; i++) blocks[order[i]] = d.slice(8 + i * 32, 8 + (i + 1) * 32);
+    const pk = new Uint8Array(raw.length);
+    pk.set(d.slice(0, 8), 0);
+    "ABCD".split("").forEach((L, i) => pk.set(blocks[L], 8 + i * 32));
+    if (raw.length > 0x88) pk.set(d.slice(0x88), 0x88);
+    return parsePK(pk, pid);
+  }
+
+  function parsePK(pk, pid) {
+    const species = u16(pk, 0x08);
+    const iv32 = u32(pk, 0x38);
+    if (species === 0 || species > 493) return { invalid: true };
+    const tid = u16(pk, 0x0C), sid = u16(pk, 0x0E);
+    const g = pk[0x40];
+    const ivs = [0, 5, 10, 15, 20, 25].map(s => (iv32 >>> s) & 31); // HP Atk Def Spe SpA SpD
+    return {
+      species,
+      item: u16(pk, 0x0A),
+      ability: pk[0x15],
+      evs: [pk[0x18], pk[0x19], pk[0x1A], pk[0x1B], pk[0x1C], pk[0x1D]],
+      ivs,
+      moves: [0x28, 0x2A, 0x2C, 0x2E].map(o => u16(pk, o)),
+      isEgg: !!((iv32 >>> 30) & 1),
+      female: !!(g & 2), genderless: !!(g & 4),
+      form: g >>> 3,
+      nature: pid % 25,
+      shiny: ((tid ^ sid ^ (pid >>> 16) ^ (pid & 0xFFFF)) & 0xFFFF) < 8,
+      level: pk.length > 0x8C ? pk[0x8C] : 0,
+      hp: pk.length > 0x90 ? u16(pk, 0x8E) : 0, maxHp: pk.length > 0x90 ? u16(pk, 0x90) : 0,
+      exp: u32(pk, 0x10),
+      metLoc: u16(pk, 0x46) || u16(pk, 0x80),
+      eggLoc: u16(pk, 0x44) || u16(pk, 0x7E),
+      metLevel: pk[0x84] & 0x7F,
+      metDate: pk[0x7B] ? `${String(pk[0x7D]).padStart(2, "0")}/${String(pk[0x7C]).padStart(2, "0")}/20${String(pk[0x7B]).padStart(2, "0")}` : "",
+      ball: Math.max(pk[0x86], pk[0x83]),
+    };
+  }
+
+  function readBlock(bytes, base) {
+    const count = bytes[base + PARTY - 4];
+    if (count < 1 || count > 6) return null;
+    const team = [];
+    for (let i = 0; i < count; i++) {
+      const off = base + PARTY + i * PK_SIZE;
+      const mon = decodePokemon(bytes.slice(off, off + PK_SIZE));
+      if (!mon || mon.invalid) return null;
+      team.push(mon);
+    }
+    return {
+      team,
+      johto: bytes[base + 0x7E],
+      kanto: bytes[base + 0x83],
+    };
+  }
+
+  const STORAGE_START = 0xF700, STORAGE_SIZE = 0x12310, BOX_SLOT = 136;
+  function readBoxes(bytes) {
+    const f = STORAGE_START + STORAGE_SIZE - 0x14;
+    const c1 = [u32(bytes, f), u32(bytes, f + 4)];
+    const c2 = [u32(bytes, PARTITION + f), u32(bytes, PARTITION + f + 4)];
+    const val = c => (c[0] === 0xFFFFFFFF ? -1 : c[0] * 4294967296 + c[1]);
+    const base = (val(c2) > val(c1) ? PARTITION : 0) + STORAGE_START;
+    const out = [];
+    for (let b = 0; b < 18; b++) for (let s = 0; s < 30; s++) {
+      const off = base + b * 0x1000 + s * BOX_SLOT;
+      const mon = decodePokemon(bytes.slice(off, off + BOX_SLOT));
+      if (mon && !mon.invalid) { mon.box = b + 1; out.push(mon); }
+    }
+    return out;
+  }
+
+  function locName(id) {
+    if (!id) return "";
+    if (id >= 3000) return LOC.l3[id - 3000] || `Lugar ${id}`;
+    if (id >= 2000) return LOC.l2[id - 2000] || `Lugar ${id}`;
+    return LOC.l0[id] || `Lugar ${id}`;
+  }
+
+  function parseSave(buffer) {
+    const bytes = new Uint8Array(buffer);
+    if (bytes.length < 0x80000) throw new Error("El archivo es demasiado pequeño para ser una partida de HeartGold (tiene que ocupar al menos 512 KB).");
+    const f = GENERAL_SIZE - 0x14;
+    const c1 = [u32(bytes, f), u32(bytes, f + 4)];
+    const c2 = [u32(bytes, PARTITION + f), u32(bytes, PARTITION + f + 4)];
+    const val = c => (c[0] === 0xFFFFFFFF ? -1 : c[0] * 4294967296 + c[1]);
+    const order = val(c2) > val(c1) ? [PARTITION, 0] : [0, PARTITION];
+    for (const base of order) {
+      const r = readBlock(bytes, base);
+      if (r) { try { r.boxes = readBoxes(bytes); } catch { r.boxes = []; } return r; }
+    }
+    throw new Error("No he podido leer el equipo. Asegúrate de subir el .sav de HeartGold/SoulSilver y de haber guardado partida al menos una vez.");
+  }
+
+  const STATS = ["HP", "Atk", "Def", "Spe", "SpA", "SpD"];
+  const SHOW_ORDER = [0, 1, 2, 4, 5, 3]; // HP Atk Def SpA SpD Spe
+
+  function speciesName(m) {
+    let n = FIX_NAMES[m.species] || DEX.sp[m.species] || `#${m.species}`;
+    const f = FORMS[m.species] && FORMS[m.species][m.form];
+    return f ? `${n}-${f}` : n;
+  }
+
+  function toPaste(team) {
+    return team.filter(m => !m.isEgg).map(m => {
+      const L = [];
+      let head = speciesName(m);
+      if (!m.genderless) head += m.female ? " (F)" : " (M)";
+      if (m.item && DEX.it[m.item]) head += ` @ ${DEX.it[m.item]}`;
+      L.push(head);
+      if (DEX.ab[m.ability]) L.push(`Ability: ${DEX.ab[m.ability]}`);
+      if (m.level !== 100) L.push(`Level: ${m.level}`);
+      if (m.shiny) L.push("Shiny: Yes");
+      const evs = SHOW_ORDER.filter(i => m.evs[i] > 0).map(i => `${m.evs[i]} ${STATS[i]}`);
+      if (evs.length) L.push(`EVs: ${evs.join(" / ")}`);
+      L.push(`${DEX.na[m.nature]} Nature`);
+      const ivs = SHOW_ORDER.filter(i => m.ivs[i] !== 31).map(i => `${m.ivs[i]} ${STATS[i]}`);
+      if (ivs.length) L.push(`IVs: ${ivs.join(" / ")}`);
+      m.moves.filter(x => x && DEX.mv[x]).forEach(x => L.push(`- ${DEX.mv[x]}`));
+      return L.join("\n");
+    }).join("\n\n");
+  }
+
+  // Exportado también para pruebas: cifra un Pokémon como lo hace el juego
+  function encodeForTest(pk) {
+    const pid = u32(pk, 0);
+    let sum = 0;
+    for (let i = 0x08; i < 0x88; i += 2) sum = (sum + u16(pk, i)) & 0xFFFF;
+    const order = ORDERS[((pid & 0x3E000) >>> 13) % 24];
+    const sh = pk.slice();
+    for (let i = 0; i < 4; i++) {
+      const L = "ABCD".indexOf(order[i]);
+      sh.set(pk.slice(8 + L * 32, 8 + (L + 1) * 32), 8 + i * 32);
+    }
+    sh[6] = sum & 0xFF; sh[7] = sum >> 8;
+    let e = crypt(sh, 0x08, 0x88, sum);
+    if (pk.length >= PK_SIZE) e = crypt(e, 0x88, PK_SIZE, pid);
+    return e;
+  }
+
+  return { parseSave, toPaste, speciesName, locName, encodeForTest, GENERAL_SIZE, PARTITION, PARTY, PK_SIZE };
+})();
+
+</script>
+<script>
+const SUPABASE_URL = "https://aflxpuctwkjteyvlrmui.supabase.co";
+const SUPABASE_KEY = "sb_publishable_FmTTmbe63YnUP_Tt4tNobA_FKX6Qxgq";
+const PLAYERS = ["Landorus", "Gorkis"];
+
+const BADGES = {
+  Johto: ["Céfiro", "Colmena", "Planicie", "Niebla", "Tormenta", "Mineral", "Glaciar", "Dragón"],
+  Kanto: ["Trueno", "Roca", "Cascada", "Arcoíris", "Alma", "Pantano", "Volcán", "Tierra"],
+};
+// Orden de los bits del juego (Kanto): Roca, Cascada, Trueno, Arcoíris, Alma, Pantano, Volcán, Tierra
+const KANTO_BIT_ORDER = ["Roca", "Cascada", "Trueno", "Arcoíris", "Alma", "Pantano", "Volcán", "Tierra"];
+BADGES.Kanto = KANTO_BIT_ORDER;
+
+// Zonas en orden de juego, con su ID de lugar en la partida (para leerlas del .sav)
+const ZONE_IDS = {
+  Johto: [126, 177, 127, 178, 179, 220, 128, 204, 180, 209, 210, 181, 211, 129, 214, 182, 131, 215, 183, 207, 184, 185, 133, 206,
+    186, 187, 132, 212, 188, 189, 218, 130, 195, 228, 196, 202, 190, 216, 134, 191, 135, 213, 192, 217, 136, 222, 193, 194,
+    205, 226, 175, 223, 174, 221],
+  Kanto: [143, 154, 159, 197, 150, 140, 151, 198, 152, 141, 172, 173, 199, 153, 157, 158, 200, 201, 142, 156, 155, 148, 144,
+    164, 165, 166, 145, 160, 161, 162, 163, 167, 168, 203, 146, 169, 138, 149, 139, 170, 224, 176, 137, 219],
+};
+const TOGEPI_EGG = "Huevo de Togepi";
+const ZONES = [
+  ["Especiales", [TOGEPI_EGG]],
+  ["Johto", ZONE_IDS.Johto.map(i => LOC.l0[i])],
+  ["Kanto", ZONE_IDS.Kanto.map(i => LOC.l0[i])],
+];
+const ZONE_BY_LOC = {};
+Object.values(ZONE_IDS).flat().forEach(i => ZONE_BY_LOC[i] = LOC.l0[i]);
+function zoneOf(m) {
+  if (m.eggLoc === 2013) return TOGEPI_EGG; // huevo del Sr. Pokémon
+  return ZONE_BY_LOC[m.metLoc] || null;
+}
+const ZONE_REGION = {};
+ZONES.forEach(([reg, list]) => list.forEach(z => ZONE_REGION[z] = reg));
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+};
+
+let db = null, me = null, rival = null;
+const state = { players: {}, enc: { Landorus: {}, Gorkis: {} } };
+let filter = "all", query = "";
+let saveBadges = null;
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200);
+}
+function setSync(ok, text) {
+  $("sync-dot").className = "dot " + (ok === true ? "on" : ok === false ? "err" : "");
+  $("sync-text").textContent = text;
+}
+function showError(msg) { const b = $("banner"); b.textContent = msg; b.hidden = !msg; }
+
+// ---------- Datos ----------
+async function loadAll() {
+  const [p, e] = await Promise.all([
+    db.from("players").select("*"),
+    db.from("encounters").select("player,route_key,status,updated_at"),
+  ]);
+  if (p.error || e.error) throw (p.error || e.error);
+  state.players = {}; p.data.forEach(r => state.players[r.name] = r);
+  state.enc = { Landorus: {}, Gorkis: {} };
+  e.data.forEach(r => { (state.enc[r.player] ||= {})[r.route_key] = r; });
+  renderAll();
+}
+
+async function updatePlayer(fields) {
+  const prev = { ...state.players[me] };
+  Object.assign(state.players[me], fields, { updated_at: new Date().toISOString() });
+  renderMine();
+  const { error } = await db.from("players").update({ ...fields, updated_at: new Date().toISOString() }).eq("name", me);
+  if (error) { state.players[me] = prev; renderMine(); toast("No se ha guardado. Revisa la conexión e inténtalo de nuevo."); }
+}
+
+async function setEncounter(zone, status) {
+  const mine = state.enc[me];
+  const prev = mine[zone];
+  if (status) mine[zone] = { player: me, route_key: zone, status, updated_at: new Date().toISOString() };
+  else delete mine[zone];
+  renderRoutes();
+  const req = status
+    ? db.from("encounters").upsert({ player: me, route_key: zone, status, updated_at: new Date().toISOString() })
+    : db.from("encounters").delete().eq("player", me).eq("route_key", zone);
+  const { error } = await req;
+  if (error) {
+    if (prev) mine[zone] = prev; else delete mine[zone];
+    renderRoutes(); toast("No se ha guardado. Revisa la conexión e inténtalo de nuevo.");
+    return;
+  }
+  if (status && state.players[me].location !== zone) updatePlayer({ location: zone });
+}
+
+// ---------- Render ----------
+function renderAll() { renderMine(); renderRoutes(); renderRival(); }
+
+function renderMine() {
+  const p = state.players[me]; if (!p) return;
+  $("lives-num").innerHTML = `${p.lives}<small>/30</small>`;
+  $("life-minus").disabled = p.lives <= 0;
+  $("life-plus").disabled = p.lives >= 30;
+  $("pips").innerHTML = Array.from({ length: 30 }, (_, i) => `<i class="pip${i < p.lives ? "" : " lost"}"></i>`).join("");
+  const owned = new Set(p.badges || []);
+  ["Johto", "Kanto"].forEach((reg, r) => {
+    $("badges-" + reg.toLowerCase()).innerHTML = BADGES[reg].map((n, i) => {
+      const id = r * 8 + i;
+      return `<button class="badge${owned.has(id) ? " on" : ""}" id="badge-${id}" data-b="${id}" aria-pressed="${owned.has(id)}" title="Medalla ${n}"><i class="gem"></i><span>${n}</span></button>`;
+    }).join("");
+  });
+  $("badge-count").textContent = `${owned.size}/16`;
+  updateApplyBadges();
+}
+
+function routeCounts(player) {
+  const v = Object.values(state.enc[player] || {});
+  return { caught: v.filter(r => r.status === "caught").length, failed: v.filter(r => r.status === "failed").length };
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function renderRoutes() {
+  const mine = state.enc[me] || {};
+  const loc = state.players[me]?.location;
+  const total = ZONES.reduce((a, [, l]) => a + l.length, 0);
+  const c = routeCounts(me);
+  $("c-caught").textContent = `${c.caught} capturas`;
+  $("c-failed").textContent = `${c.failed} fallos`;
+  $("c-left").textContent = `${total - c.caught - c.failed} por visitar`;
+  const q = query.trim().toLowerCase();
+  let html = "";
+  ZONES.forEach(([reg, list]) => {
+    if (filter === "Johto" && reg !== "Johto") return;
+    if (filter === "Kanto" && reg !== "Kanto") return;
+    const rows = list.filter(z => (!q || z.toLowerCase().includes(q)) && (filter !== "pend" || !mine[z]));
+    if (!rows.length) return;
+    html += `<div class="zone-h label">${reg}</div>`;
+    rows.forEach(z => {
+      const st = mine[z]?.status || "";
+      const ez = esc(z);
+      html += `<div class="route ${st}">
+        <button class="pin${loc === z ? " on" : ""}" data-pin="${ez}" title="Marcar como zona actual" aria-label="Marcar ${ez} como zona actual">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+        </button>
+        <span class="name">${ez}${loc === z ? '<span class="here">aquí</span>' : ""}</span>
+        <span class="seg">
+          <button class="c" data-z="${ez}" data-s="caught" aria-pressed="${st === "caught"}">Capturado</button>
+          <button class="f" data-z="${ez}" data-s="failed" aria-pressed="${st === "failed"}">Fallido</button>
+        </span>
+      </div>`;
+    });
+  });
+  updateApplyZones();
+  $("routes").innerHTML = html || `<p class="muted" style="padding:14px 18px">No hay zonas con ese filtro.</p>`;
+}
+
+function timeAgo(iso) {
+  if (!iso) return "—";
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 60) return "hace un momento";
+  if (s < 3600) return `hace ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `hace ${Math.floor(s / 3600)} h`;
+  return `hace ${Math.floor(s / 86400)} días`;
+}
+
+function renderRival() {
+  const p = state.players[rival];
+  $("rv-name").textContent = rival;
+  if (!p) return;
+  const owned = new Set(p.badges || []);
+  $("rv-lives").textContent = `${p.lives}/30`;
+  $("rv-badges-n").textContent = `${owned.size}/16`;
+  $("rv-badges").innerHTML = Array.from({ length: 16 }, (_, i) =>
+    `<i class="${owned.has(i) ? "on" : ""}${i === 8 ? " gap" : ""}" title="${i < 8 ? BADGES.Johto[i] : BADGES.Kanto[i - 8]}"></i>`).join("");
+  $("rv-zone").textContent = p.location ? `${p.location}${ZONE_REGION[p.location] && ZONE_REGION[p.location] !== "Especiales" ? " · " + ZONE_REGION[p.location] : ""}` : "Sin empezar";
+  const c = routeCounts(rival);
+  $("rv-zones").textContent = `${c.caught} ✓ · ${c.failed} ✗`;
+  const encTimes = Object.values(state.enc[rival] || {}).map(r => r.updated_at);
+  const last = [p.updated_at, ...encTimes].filter(Boolean).sort().pop();
+  $("rv-when").textContent = timeAgo(last);
+}
+
+// ---------- Equipo desde el .sav ----------
+function readSave(file) {
+  $("team-err").hidden = true;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const r = HG.parseSave(fr.result);
+      const paste = HG.toPaste(r.team);
+      $("paste").textContent = paste;
+      $("team-cards").innerHTML = r.team.map(m => {
+        if (m.isEgg) return `<div class="mon"><b>Huevo</b><small>—</small></div>`;
+        const pct = m.maxHp ? Math.round(100 * m.hp / m.maxHp) : 0;
+        return `<div class="mon"><b>${esc(LOC.spEs[m.species] || HG.speciesName(m))}${m.shiny ? " ✦" : ""}</b><small>Nv. ${m.level} · ${m.hp}/${m.maxHp} PS</small><div class="hpbar"><i style="width:${pct}%"></i></div></div>`;
+      }).join("");
+      renderCaptures(r);
+      saveBadges = [];
+      for (let i = 0; i < 8; i++) if (r.johto >> i & 1) saveBadges.push(i);
+      for (let i = 0; i < 8; i++) if (r.kanto >> i & 1) saveBadges.push(8 + i);
+      $("team-out").hidden = false;
+      updateApplyBadges();
+      toast(`Equipo leído: ${r.team.length} Pokémon`);
+    } catch (e) {
+      $("team-out").hidden = true;
+      $("team-err").textContent = e.message; $("team-err").hidden = false;
+    }
+  };
+  fr.readAsArrayBuffer(file);
+}
+let saveZones = [];
+function renderCaptures(r) {
+  const all = [...r.team.map(m => ({ ...m, where: "team" })), ...r.boxes.map(m => ({ ...m, where: "box" }))].filter(m => !m.isEgg);
+  $("caps").innerHTML = all.map(m => {
+    const z = zoneOf(m);
+    const place = m.eggLoc && !z ? `${HG.locName(m.metLoc)} (eclosión)` : HG.locName(m.metLoc) || "—";
+    return `<tr>
+      <td><b>${esc(LOC.spEs[m.species] || HG.speciesName(m))}</b>${m.shiny ? " ✦" : ""}</td>
+      <td class="${z ? "zone-ok" : ""}">${esc(z || place)}</td>
+      <td>${m.metLevel || (m.eggLoc ? "Huevo" : "—")}</td>
+      <td>${m.metDate || "—"}</td>
+      <td>${esc(LOC.ball[m.ball] || "—")}</td>
+      <td>${m.where === "team" ? '<span class="tag team">Equipo</span>' : `<span class="tag">Caja ${m.box}</span>`}</td>
+    </tr>`;
+  }).join("");
+  saveZones = [...new Set(all.map(zoneOf).filter(Boolean))];
+  $("caps-note").textContent = `${all.length} Pokémon entre equipo y cajas, de ${saveZones.length} zonas distintas. Los que se te murieron y liberaste no aparecen.`;
+  updateApplyZones();
+}
+function updateApplyZones() {
+  const btn = $("apply-zones");
+  const mine = state.enc[me] || {};
+  const missing = saveZones.filter(z => mine[z]?.status !== "caught");
+  btn.hidden = !missing.length;
+  btn.textContent = `Marcar ${missing.length} ${missing.length === 1 ? "zona" : "zonas"} como capturada${missing.length === 1 ? "" : "s"}`;
+  btn.dataset.zones = JSON.stringify(missing);
+}
+async function applyZones() {
+  const zones = JSON.parse($("apply-zones").dataset.zones || "[]");
+  if (!zones.length) return;
+  const now = new Date().toISOString();
+  const rows = zones.map(z => ({ player: me, route_key: z, status: "caught", updated_at: now }));
+  const { error } = await db.from("encounters").upsert(rows);
+  if (error) { toast("No se ha guardado. Revisa la conexión e inténtalo de nuevo."); return; }
+  rows.forEach(r => state.enc[me][r.route_key] = r);
+  renderRoutes(); updateApplyZones();
+  toast(`${zones.length} zonas marcadas`);
+}
+function updateApplyBadges() {
+  const btn = $("apply-badges");
+  if (!saveBadges || !state.players[me]) { btn.hidden = true; return; }
+  const cur = [...(state.players[me].badges || [])].sort((a, b) => a - b).join();
+  btn.hidden = cur === [...saveBadges].sort((a, b) => a - b).join();
+  btn.textContent = `Usar medallas del save (${saveBadges.length})`;
+}
+
+// ---------- Eventos ----------
+function choose(name) {
+  me = name; rival = PLAYERS.find(p => p !== name);
+  store.set("rl-player", name);
+  $("me-name").textContent = me;
+  $("pick").hidden = true; $("app").hidden = false;
+  $("team-out").hidden = true; saveBadges = null; saveZones = []; $("save-file").value = "";
+  renderAll();
+}
+document.querySelectorAll(".pick-card").forEach(b => b.addEventListener("click", () => choose(b.dataset.player)));
+$("switch").addEventListener("click", () => { store.set("rl-player", null); $("app").hidden = true; $("pick").hidden = false; });
+
+$("life-minus").addEventListener("click", () => { const l = state.players[me].lives; if (l > 0) updatePlayer({ lives: l - 1 }); });
+$("life-plus").addEventListener("click", () => { const l = state.players[me].lives; if (l < 30) updatePlayer({ lives: l + 1 }); });
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-b]");
+  if (b) {
+    const id = +b.dataset.b; const s = new Set(state.players[me].badges || []);
+    s.has(id) ? s.delete(id) : s.add(id);
+    updatePlayer({ badges: [...s].sort((a, b) => a - b) });
+    return;
+  }
+  const seg = e.target.closest("[data-s]");
+  if (seg) {
+    const z = seg.dataset.z, s = seg.dataset.s;
+    setEncounter(z, state.enc[me][z]?.status === s ? null : s);
+    return;
+  }
+  const pin = e.target.closest("[data-pin]");
+  if (pin) {
+    const z = pin.dataset.pin;
+    updatePlayer({ location: state.players[me].location === z ? "" : z }).then(renderRoutes);
+  }
+});
+
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderRoutes();
+}));
+$("search").addEventListener("input", e => { query = e.target.value; renderRoutes(); });
+
+$("save-file").addEventListener("change", e => e.target.files[0] && readSave(e.target.files[0]));
+const drop = $("drop");
+["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => e.dataTransfer.files[0] && readSave(e.dataTransfer.files[0]));
+
+$("copy-paste").addEventListener("click", async () => {
+  const text = $("paste").textContent;
+  try { await navigator.clipboard.writeText(text); toast("Pokepaste copiado"); }
+  catch {
+    const r = document.createRange(); r.selectNodeContents($("paste"));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    toast("Texto seleccionado: pulsa Ctrl+C para copiarlo");
+  }
+});
+$("apply-zones").addEventListener("click", applyZones);
+$("apply-badges").addEventListener("click", () => { if (saveBadges) updatePlayer({ badges: [...saveBadges].sort((a, b) => a - b) }); });
+
+setInterval(() => { if (me) renderRival(); }, 60000);
+
+// ---------- Arranque ----------
+(async function start() {
+  const saved = store.get("rl-player");
+  if (PLAYERS.includes(saved)) choose(saved); else $("pick").hidden = false;
+  if (!window.supabase) { setSync(false, "Sin conexión"); showError("No se ha podido cargar la librería de Supabase. Comprueba tu conexión a internet y recarga la página."); return; }
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  try {
+    await loadAll();
+    setSync(true, "Sincronizado");
+  } catch (e) {
+    setSync(false, "Sin conexión");
+    showError("No se puede conectar con la base de datos. Si el proyecto de Supabase está en pausa, reactívalo desde su panel y recarga.");
+    return;
+  }
+  db.channel("partida")
+    .on("postgres_changes", { event: "*", schema: "public", table: "players" }, () => loadAll().catch(() => {}))
+    .on("postgres_changes", { event: "*", schema: "public", table: "encounters" }, () => loadAll().catch(() => {}))
+    .subscribe(s => { if (s === "SUBSCRIBED") setSync(true, "En directo"); });
+})();
+</script>
+</body>
+</html>
